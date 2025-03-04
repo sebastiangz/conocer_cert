@@ -1,6 +1,6 @@
 # Gestión de Certificaciones CONOCER
 
-Este plugin para Moodle proporciona un sistema integral para la gestión de certificaciones CONOCER (Consejo Nacional de Normalización y Certificación de Competencias Laborales de México) dentro de una instalación de Moodle.
+Este plugin para EduCon proporciona un sistema integral para la gestión de certificaciones CONOCER (Consejo Nacional de Normalización y Certificación de Competencias Laborales de México) dentro de una instalación de Moodle.
 
 ## Descripción General
 

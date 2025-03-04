@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+  <!-- Fondo circular -->
+  <circle cx="24" cy="24" r="22" fill="#0066cc" />
+  
+  <!-- Certificado/Documento -->
+  <path d="M14 12 L34 12 L34 36 L14 36 Z" fill="#ffffff" />
+  
+  <!-- Líneas del documento -->
+  <path d="M18 18 L30 18 M18 22 L30 22 M18 26 L26 26" stroke="#0066cc" stroke-width="1.5" />
+  
+  <!-- Sello de certificación -->
+  <circle cx="32" cy="32" r="8" fill="#ff9900" />
+  
+  <!-- Estrellas del sello (representando certificación) -->
+  <path d="M32 28 L33 31 L36 31 L33.5 33 L34.5 36 L32 34.5 L29.5 36 L30.5 33 L28 31 L31 31 Z" fill="#ffffff" />
+  
+  <!-- Letras "CONOCER" -->
+  <path d="M19 31 C19 30 20 29 21 29 C22 29 23 30 23 31 C23 32 22 33 21 33 C20 33 19 32 19 31 Z
+           M24 33 L24 29 L25 29 L25 33 Z 
+           M26 33 L26 29 L29 29 L29 30 L27 30 L27 33 Z
+           M30 33 L30 29 L31 29 L31 33 Z" fill="#0066cc" />
+</svg>

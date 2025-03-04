@@ -15,9 +15,9 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 {{!
-    @template local_conocer_cert/evaluator_dashboard
+    @template local_conocer_cert/admin_dashboard
 
-    Evaluator dashboard for the CONOCER certification system.
+    Admin dashboard for the CONOCER certification system.
 
     Classes required for JS:
     * none
@@ -26,72 +26,94 @@
     * none
 
     Context variables required for this template:
-    * fullname - Full name of the evaluator
-    * is_evaluator - Boolean indicating if the user is an evaluator
-    * assigned_candidates - Array of candidates assigned to the evaluator
-    * completed_evaluations - Array of completed evaluations
-    * stats - Object with evaluator statistics
+    * fullname - Full name of the administrator
+    * is_admin - Boolean indicating if the user is an administrator
+    * stats - Object with administrator statistics
+    * recent_requests - Array of recent certification requests
+    * pending_companies - Array of pending companies
+    * pending_evaluator_assignments - Array of candidates pending evaluator assignment
     * notifications - Array of recent notifications
-    * pending_url - URL for the pending evaluations page
-    * completed_url - URL for the completed evaluations page
-    * profile_url - URL for the evaluator's profile page
-    * has_assigned_candidates - Boolean indicating if there are assigned candidates
-    * has_completed_evaluations - Boolean indicating if there are completed evaluations
+    * candidates_url - URL for the candidates management page
+    * companies_url - URL for the companies management page
+    * evaluators_url - URL for the evaluators management page
+    * competencies_url - URL for the competencies management page
+    * reports_url - URL for the reports page
+    * has_recent_requests - Boolean indicating if there are recent requests
+    * has_pending_companies - Boolean indicating if there are pending companies
+    * has_pending_evaluator_assignments - Boolean indicating if there are pending evaluator assignments
 
     Example context (json):
     {
-        "fullname": "José Rodríguez Evaluador",
-        "is_evaluator": true,
-        "assigned_candidates": [
+        "fullname": "Juan Pérez Admin",
+        "is_admin": true,
+        "stats": {
+            "total_candidates": 150,
+            "total_companies": 25,
+            "total_evaluators": 30,
+            "total_competencies": 45,
+            "pending_documents": 10,
+            "pending_evaluation": 15,
+            "pending_companies": 5,
+            "approved_certifications": 100,
+            "rejected_certifications": 20
+        },
+        "recent_requests": [
             {
                 "id": 123,
-                "candidate_name": "Juan Pérez García",
+                "fullname": "María López",
                 "competencia": "Impartición de cursos de formación",
                 "nivel": 3,
-                "fecha_asignacion": "14/02/2025",
-                "days_pending": 5,
-                "is_urgent": true,
+                "estado": "Pendiente",
+                "fecha": "14/02/2025",
                 "view_url": "#"
             }
         ],
-        "completed_evaluations": [
+        "pending_companies": [
             {
                 "id": 45,
-                "candidate_name": "Ana López Gutiérrez",
-                "competencia": "Diseño de cursos de formación",
-                "nivel": 2,
-                "resultado": "Aprobado",
-                "fecha_evaluacion": "10/02/2025",
+                "nombre": "Empresa Formadora ABC",
+                "rfc": "EFA123456ABC",
+                "contacto": "Roberto Gómez",
+                "fecha": "10/02/2025",
                 "view_url": "#"
             }
         ],
-        "stats": {
-            "total_asignados": 25,
-            "pendientes": 5,
-            "en_progreso": 2,
-            "completados": 18,
-            "ultimos_7_dias": 3
-        },
+        "pending_evaluator_assignments": [
+            {
+                "id": 67,
+                "candidato_id": 89,
+                "fullname": "Carlos Rodríguez",
+                "competencia": "Diseño de cursos de formación",
+                "nivel": 2,
+                "fecha": "09/02/2025",
+                "days_pending": 6,
+                "is_urgent": true,
+                "assign_url": "#"
+            }
+        ],
         "notifications": [
             {
                 "id": 123,
-                "message": "Nueva asignación: Juan Pérez García",
+                "message": "Nueva solicitud de certificación",
                 "time": "15/02/2025 10:30",
                 "is_new": true
             }
         ],
-        "pending_url": "#",
-        "completed_url": "#",
-        "profile_url": "#",
-        "has_assigned_candidates": true,
-        "has_completed_evaluations": true
+        "candidates_url": "#",
+        "companies_url": "#",
+        "evaluators_url": "#",
+        "competencies_url": "#",
+        "reports_url": "#",
+        "has_recent_requests": true,
+        "has_pending_companies": true,
+        "has_pending_evaluator_assignments": true
     }
 }}
 
-{{#is_evaluator}}
-<div class="local-conocer-cert-evaluator-dashboard">
+{{#is_admin}}
+<div class="local-conocer-cert-admin-dashboard">
     <div class="dashboard-header">
-        <h2>{{#str}}evaluator_dashboard, local_conocer_cert{{/str}}</h2>
+        <h2>{{#str}}admin_dashboard, local_conocer_cert{{/str}}</h2>
         <p class="user-welcome">{{#str}}welcome, local_conocer_cert{{/str}}, {{fullname}}</p>
     </div>
 
@@ -105,24 +127,40 @@
                     </div>
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item d-flex justify-content-between align-items-center">
-                            {{#str}}total_assignations, local_conocer_cert{{/str}}
-                            <span class="badge badge-primary badge-pill">{{stats.total_asignados}}</span>
+                            {{#str}}total_candidates, local_conocer_cert{{/str}}
+                            <span class="badge badge-primary badge-pill">{{stats.total_candidates}}</span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-center">
-                            {{#str}}pending, local_conocer_cert{{/str}}
-                            <span class="badge badge-warning badge-pill">{{stats.pendientes}}</span>
+                            {{#str}}total_companies, local_conocer_cert{{/str}}
+                            <span class="badge badge-primary badge-pill">{{stats.total_companies}}</span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-center">
-                            {{#str}}in_progress, local_conocer_cert{{/str}}
-                            <span class="badge badge-info badge-pill">{{stats.en_progreso}}</span>
+                            {{#str}}total_evaluators, local_conocer_cert{{/str}}
+                            <span class="badge badge-primary badge-pill">{{stats.total_evaluators}}</span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-center">
-                            {{#str}}completed, local_conocer_cert{{/str}}
-                            <span class="badge badge-success badge-pill">{{stats.completados}}</span>
+                            {{#str}}total_competencies, local_conocer_cert{{/str}}
+                            <span class="badge badge-primary badge-pill">{{stats.total_competencies}}</span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-center">
-                            {{#str}}last_7_days, local_conocer_cert{{/str}}
-                            <span class="badge badge-secondary badge-pill">{{stats.ultimos_7_dias}}</span>
+                            {{#str}}pending_documents, local_conocer_cert{{/str}}
+                            <span class="badge badge-warning badge-pill">{{stats.pending_documents}}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{#str}}pending_evaluation, local_conocer_cert{{/str}}
+                            <span class="badge badge-warning badge-pill">{{stats.pending_evaluation}}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{#str}}pending_companies, local_conocer_cert{{/str}}
+                            <span class="badge badge-warning badge-pill">{{stats.pending_companies}}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{#str}}approved_certifications, local_conocer_cert{{/str}}
+                            <span class="badge badge-success badge-pill">{{stats.approved_certifications}}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{#str}}rejected_certifications, local_conocer_cert{{/str}}
+                            <span class="badge badge-danger badge-pill">{{stats.rejected_certifications}}</span>
                         </li>
                     </ul>
                 </div>
@@ -153,17 +191,23 @@
                 <!-- Quick actions -->
                 <div class="card mb-4">
                     <div class="card-header bg-secondary text-white">
-                        <h3 class="h5 mb-0">{{#str}}quick_actions, local_conocer_cert{{/str}}</h3>
+                        <h3 class="h5 mb-0">{{#str}}management, local_conocer_cert{{/str}}</h3>
                     </div>
                     <div class="list-group list-group-flush">
-                        <a href="{{pending_url}}" class="list-group-item list-group-item-action">
-                            <i class="fa fa-clipboard-list mr-2"></i> {{#str}}view_pending_evaluations, local_conocer_cert{{/str}}
+                        <a href="{{candidates_url}}" class="list-group-item list-group-item-action">
+                            <i class="fa fa-users mr-2"></i> {{#str}}manage_candidates, local_conocer_cert{{/str}}
                         </a>
-                        <a href="{{completed_url}}" class="list-group-item list-group-item-action">
-                            <i class="fa fa-check-double mr-2"></i> {{#str}}view_completed_evaluations, local_conocer_cert{{/str}}
+                        <a href="{{companies_url}}" class="list-group-item list-group-item-action">
+                            <i class="fa fa-building mr-2"></i> {{#str}}manage_companies, local_conocer_cert{{/str}}
                         </a>
-                        <a href="{{profile_url}}" class="list-group-item list-group-item-action">
-                            <i class="fa fa-user-edit mr-2"></i> {{#str}}edit_profile, local_conocer_cert{{/str}}
+                        <a href="{{evaluators_url}}" class="list-group-item list-group-item-action">
+                            <i class="fa fa-user-tie mr-2"></i> {{#str}}manage_evaluators, local_conocer_cert{{/str}}
+                        </a>
+                        <a href="{{competencies_url}}" class="list-group-item list-group-item-action">
+                            <i class="fa fa-certificate mr-2"></i> {{#str}}manage_competencies, local_conocer_cert{{/str}}
+                        </a>
+                        <a href="{{reports_url}}" class="list-group-item list-group-item-action">
+                            <i class="fa fa-chart-bar mr-2"></i> {{#str}}view_reports, local_conocer_cert{{/str}}
                         </a>
                     </div>
                 </div>
@@ -171,12 +215,11 @@
 
             <!-- Main content -->
             <div class="col-md-9">
-                <!-- Assigned candidates -->
-                {{#has_assigned_candidates}}
+                <!-- Recent requests -->
+                {{#has_recent_requests}}
                 <div class="card mb-4">
-                    <div class="card-header bg-warning text-white d-flex justify-content-between align-items-center">
-                        <h3 class="h5 mb-0">{{#str}}assigned_candidates, local_conocer_cert{{/str}}</h3>
-                        <span class="badge badge-light">{{stats.pendientes}}</span>
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <h3 class="h5 mb-0">{{#str}}recent_requests, local_conocer_cert{{/str}}</h3>
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
@@ -186,18 +229,66 @@
                                         <th>{{#str}}candidate, local_conocer_cert{{/str}}</th>
                                         <th>{{#str}}competency, local_conocer_cert{{/str}}</th>
                                         <th>{{#str}}level, local_conocer_cert{{/str}}</th>
-                                        <th>{{#str}}assignment_date, local_conocer_cert{{/str}}</th>
+                                        <th>{{#str}}status, local_conocer_cert{{/str}}</th>
+                                        <th>{{#str}}date, local_conocer_cert{{/str}}</th>
+                                        <th>{{#str}}actions, local_conocer_cert{{/str}}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{#recent_requests}}
+                                        <tr>
+                                            <td>{{fullname}}</td>
+                                            <td>{{competencia}}</td>
+                                            <td>{{nivel}}</td>
+                                            <td>{{estado}}</td>
+                                            <td>{{fecha}}</td>
+                                            <td>
+                                                <a href="{{view_url}}" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fa fa-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {{/recent_requests}}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card-footer text-right">
+                        <a href="{{candidates_url}}" class="btn btn-outline-primary btn-sm">
+                            {{#str}}view_all, local_conocer_cert{{/str}}
+                            <i class="fa fa-arrow-right ml-1"></i>
+                        </a>
+                    </div>
+                </div>
+                {{/has_recent_requests}}
+
+                <!-- Pending evaluator assignments -->
+                {{#has_pending_evaluator_assignments}}
+                <div class="card mb-4">
+                    <div class="card-header bg-warning text-white d-flex justify-content-between align-items-center">
+                        <h3 class="h5 mb-0">{{#str}}pending_evaluator_assignments, local_conocer_cert{{/str}}</h3>
+                        <span class="badge badge-light">{{stats.pending_evaluation}}</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>{{#str}}candidate, local_conocer_cert{{/str}}</th>
+                                        <th>{{#str}}competency, local_conocer_cert{{/str}}</th>
+                                        <th>{{#str}}level, local_conocer_cert{{/str}}</th>
+                                        <th>{{#str}}request_date, local_conocer_cert{{/str}}</th>
                                         <th>{{#str}}days_pending, local_conocer_cert{{/str}}</th>
                                         <th>{{#str}}actions, local_conocer_cert{{/str}}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {{#assigned_candidates}}
+                                    {{#pending_evaluator_assignments}}
                                         <tr {{#is_urgent}}class="table-danger"{{/is_urgent}}>
-                                            <td>{{candidate_name}}</td>
+                                            <td>{{fullname}}</td>
                                             <td>{{competencia}}</td>
                                             <td>{{nivel}}</td>
-                                            <td>{{fecha_asignacion}}</td>
+                                            <td>{{fecha}}</td>
                                             <td>
                                                 {{#is_urgent}}
                                                     <span class="badge badge-danger">{{days_pending}} {{#str}}days, local_conocer_cert{{/str}}</span>
@@ -207,80 +298,102 @@
                                                 {{/is_urgent}}
                                             </td>
                                             <td>
-                                                <a href="{{view_url}}" class="btn btn-sm btn-primary">
-                                                    <i class="fa fa-clipboard-check mr-1"></i> {{#str}}evaluate, local_conocer_cert{{/str}}
+                                                <a href="{{assign_url}}" class="btn btn-sm btn-primary">
+                                                    <i class="fa fa-user-plus mr-1"></i> {{#str}}assign_evaluator, local_conocer_cert{{/str}}
                                                 </a>
                                             </td>
                                         </tr>
-                                    {{/assigned_candidates}}
+                                    {{/pending_evaluator_assignments}}
                                 </tbody>
                             </table>
                         </div>
                     </div>
                     <div class="card-footer text-right">
-                        <a href="{{pending_url}}" class="btn btn-outline-primary btn-sm">
+                        <a href="{{evaluators_url}}" class="btn btn-outline-primary btn-sm">
                             {{#str}}view_all, local_conocer_cert{{/str}}
                             <i class="fa fa-arrow-right ml-1"></i>
                         </a>
                     </div>
                 </div>
-                {{/has_assigned_candidates}}
-                
-                {{^has_assigned_candidates}}
-                <div class="card mb-4">
-                    <div class="card-header bg-primary text-white">
-                        <h3 class="h5 mb-0">{{#str}}assigned_candidates, local_conocer_cert{{/str}}</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="alert alert-info mb-0">
-                            <i class="fa fa-info-circle mr-2"></i> {{#str}}no_pending_evaluations, local_conocer_cert{{/str}}
-                        </div>
-                    </div>
-                </div>
-                {{/has_assigned_candidates}}
+                {{/has_pending_evaluator_assignments}}
 
-                <!-- Recent completed evaluations -->
-                {{#has_completed_evaluations}}
+                <!-- Pending companies -->
+                {{#has_pending_companies}}
                 <div class="card mb-4">
-                    <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
-                        <h3 class="h5 mb-0">{{#str}}recent_evaluations, local_conocer_cert{{/str}}</h3>
+                    <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                        <h3 class="h5 mb-0">{{#str}}pending_companies, local_conocer_cert{{/str}}</h3>
+                        <span class="badge badge-light">{{stats.pending_companies}}</span>
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
                             <table class="table table-hover mb-0">
                                 <thead>
                                     <tr>
-                                        <th>{{#str}}candidate, local_conocer_cert{{/str}}</th>
-                                        <th>{{#str}}competency, local_conocer_cert{{/str}}</th>
-                                        <th>{{#str}}level, local_conocer_cert{{/str}}</th>
-                                        <th>{{#str}}result, local_conocer_cert{{/str}}</th>
-                                        <th>{{#str}}evaluation_date, local_conocer_cert{{/str}}</th>
+                                        <th>{{#str}}company_name, local_conocer_cert{{/str}}</th>
+                                        <th>{{#str}}rfc, local_conocer_cert{{/str}}</th>
+                                        <th>{{#str}}contact, local_conocer_cert{{/str}}</th>
+                                        <th>{{#str}}request_date, local_conocer_cert{{/str}}</th>
                                         <th>{{#str}}actions, local_conocer_cert{{/str}}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {{#completed_evaluations}}
+                                    {{#pending_companies}}
                                         <tr>
-                                            <td>{{candidate_name}}</td>
-                                            <td>{{competencia}}</td>
-                                            <td>{{nivel}}</td>
-                                            <td>
-                                                {{#resultado}}
-                                                    {{#str}}{{resultado}}, local_conocer_cert{{/str}}
-                                                {{/resultado}}
-                                            </td>
-                                            <td>{{fecha_evaluacion}}</td>
+                                            <td>{{nombre}}</td>
+                                            <td>{{rfc}}</td>
+                                            <td>{{contacto}}</td>
+                                            <td>{{fecha}}</td>
                                             <td>
                                                 <a href="{{view_url}}" class="btn btn-sm btn-outline-primary">
                                                     <i class="fa fa-eye"></i>
                                                 </a>
                                             </td>
                                         </tr>
-                                    {{/completed_evaluations}}
+                                    {{/pending_companies}}
                                 </tbody>
                             </table>
                         </div>
                     </div>
                     <div class="card-footer text-right">
-                        <a href="{{completed_url}}" class="btn btn-outline-primary btn-sm">
-                            {{#str}}view
+                        <a href="{{companies_url}}" class="btn btn-outline-primary btn-sm">
+                            {{#str}}view_all, local_conocer_cert{{/str}}
+                            <i class="fa fa-arrow-right ml-1"></i>
+                        </a>
+                    </div>
+                </div>
+                {{/has_pending_companies}}
+                
+                <!-- If no activity is present, show welcome message -->
+                {{^has_recent_requests}}
+                {{^has_pending_evaluator_assignments}}
+                {{^has_pending_companies}}
+                    <div class="card mb-4">
+                        <div class="card-body text-center p-5">
+                            <i class="fa fa-tachometer-alt fa-4x mb-3 text-muted"></i>
+                            <h3>{{#str}}welcome_to_admin_dashboard, local_conocer_cert{{/str}}</h3>
+                            <p class="lead">{{#str}}no_pending_actions, local_conocer_cert{{/str}}</p>
+                        </div>
+                    </div>
+                {{/has_pending_companies}}
+                {{/has_pending_evaluator_assignments}}
+                {{/has_recent_requests}}
+            </div>
+        </div>
+    </div>
+</div>
+
+{{#js}}
+require(['jquery', 'local_conocer_cert/dashboard_controller'], function($, DashboardController) {
+    // Initialize the admin dashboard
+    var dashboard = DashboardController.init('admin', {
+        enableAutoRefresh: true
+    });
+});
+{{/js}}
+{{/is_admin}}
+
+{{^is_admin}}
+<div class="alert alert-warning">
+    {{#str}}error_permission, local_conocer_cert{{/str}}
+</div>
+{{/is_admin}}

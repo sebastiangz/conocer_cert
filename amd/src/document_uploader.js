@@ -11,21 +11,21 @@ function($, Str, Notification, Ajax, Templates, ModalFactory, ModalEvents) {
     /**
      * DocumentUploader class.
      *
-     * @param {String} formId ID of the form containing file inputs
-     * @param {String} fileListContainerId ID of the container where file list will be displayed
+     * @param {String} formSelector Selector for the form containing file inputs
+     * @param {String} fileListContainerSelector Selector for the container where file list will be displayed
      * @param {Object} options Configuration options
      */
-    var DocumentUploader = function(formId, fileListContainerId, options) {
-        this.formId = formId;
-        this.fileListContainerId = fileListContainerId;
+    var DocumentUploader = function(formSelector, fileListContainerSelector, options) {
+        this.formSelector = formSelector;
+        this.fileListContainerSelector = fileListContainerSelector;
         this.options = $.extend({
             allowedTypes: ['application/pdf', 'image/jpeg', 'image/png'],
             maxFileSize: 10485760, // 10MB default
             requiredDocTypes: [],
-            uploadUrl: M.cfg.wwwroot + '/local/conocer_cert/upload_document.php',
-            deleteUrl: M.cfg.wwwroot + '/local/conocer_cert/delete_document.php',
             candidateId: 0,
-            showValidationErrors: true
+            showValidationErrors: true,
+            autoUpload: false,
+            preventFormSubmit: false
         }, options);
         
         this.files = {};
@@ -48,7 +48,7 @@ function($, Str, Notification, Ajax, Templates, ModalFactory, ModalEvents) {
         var self = this;
         
         // Handle file input change
-        $('#' + this.formId).find('input[type="file"]').on('change', function(e) {
+        $(this.formSelector).find('input[type="file"]').on('change', function(e) {
             var fileInput = $(this);
             var docType = fileInput.data('doc-type');
             
@@ -71,7 +71,7 @@ function($, Str, Notification, Ajax, Templates, ModalFactory, ModalEvents) {
         });
         
         // Handle form submit
-        $('#' + this.formId).on('submit', function(e) {
+        $(this.formSelector).on('submit', function(e) {
             if (self.options.preventFormSubmit) {
                 e.preventDefault();
                 
@@ -80,7 +80,9 @@ function($, Str, Notification, Ajax, Templates, ModalFactory, ModalEvents) {
                     // Upload any files not yet uploaded
                     self.uploadAllFiles().then(function() {
                         // After all uploads complete, submit the form
-                        $(this).off('submit').submit();
+                        $(self.formSelector).off('submit').submit();
+                    }).catch(function(error) {
+                        Notification.exception(error);
                     });
                 }
             } else {
@@ -112,6 +114,16 @@ function($, Str, Notification, Ajax, Templates, ModalFactory, ModalEvents) {
             } else if (self.files[docType]) {
                 delete self.files[docType];
                 self.updateFilesList();
+            }
+        });
+        
+        // Handle view document buttons
+        $(document).on('click', '.doc-view-btn', function(e) {
+            e.preventDefault();
+            var viewUrl = $(this).data('view-url');
+            
+            if (viewUrl) {
+                window.open(viewUrl, '_blank');
             }
         });
     };
@@ -158,7 +170,8 @@ function($, Str, Notification, Ajax, Templates, ModalFactory, ModalEvents) {
                 Str.get_string('error:filetoobig', 'local_conocer_cert', this.formatFileSize(this.options.maxFileSize))
                     .then(function(message) {
                         Notification.alert('', message);
-                    });
+                    })
+                    .catch(Notification.exception);
             }
             return false;
         }
@@ -169,7 +182,8 @@ function($, Str, Notification, Ajax, Templates, ModalFactory, ModalEvents) {
                 Str.get_string('error:invalidfiletype', 'local_conocer_cert', this.options.allowedTypes.join(', '))
                     .then(function(message) {
                         Notification.alert('', message);
-                    });
+                    })
+                    .catch(Notification.exception);
             }
             return false;
         }
@@ -185,20 +199,23 @@ function($, Str, Notification, Ajax, Templates, ModalFactory, ModalEvents) {
     DocumentUploader.prototype.validateRequiredDocuments = function() {
         var self = this;
         var allRequired = true;
+        var missingDocTypes = [];
         
         this.options.requiredDocTypes.forEach(function(docType) {
             // Check if the document is either selected or already uploaded
             if (!self.files[docType] && !self.uploadedFiles[docType]) {
                 allRequired = false;
-                
-                if (self.options.showValidationErrors) {
-                    Str.get_string('required_document_missing', 'local_conocer_cert', docType)
-                        .then(function(message) {
-                            Notification.alert('', message);
-                        });
-                }
+                missingDocTypes.push(docType);
             }
         });
+        
+        if (!allRequired && this.options.showValidationErrors && missingDocTypes.length > 0) {
+            Str.get_string('required_documents_missing', 'local_conocer_cert', missingDocTypes.join(', '))
+                .then(function(message) {
+                    Notification.alert('', message);
+                })
+                .catch(Notification.exception);
+        }
         
         return allRequired;
     };
@@ -210,52 +227,65 @@ function($, Str, Notification, Ajax, Templates, ModalFactory, ModalEvents) {
         var self = this;
         var files = [];
         
-        // Combine selected files and uploaded files
+        // Combine selected files and uploaded files for display
         $.each(this.files, function(docType, file) {
             if (!self.uploadedFiles[docType]) {
                 files.push({
                     docType: docType,
+                    docTypeName: M.util.get_string('doc_' + docType, 'local_conocer_cert') || docType,
                     fileName: file.name,
                     fileSize: self.formatFileSize(file.size),
                     isUploaded: false,
-                    status: 'pendiente'
+                    isPending: true,
+                    status: 'pendiente',
+                    statusText: M.util.get_string('doc_status_pendiente', 'local_conocer_cert') || 'Pendiente'
                 });
             }
         });
         
         $.each(this.uploadedFiles, function(docType, fileInfo) {
+            var statusClass = '';
+            switch(fileInfo.estado) {
+                case 'aprobado':
+                    statusClass = 'success';
+                    break;
+                case 'rechazado':
+                    statusClass = 'danger';
+                    break;
+                default:
+                    statusClass = 'warning';
+            }
+            
             files.push({
                 docType: docType,
+                docTypeName: M.util.get_string('doc_' + docType, 'local_conocer_cert') || docType,
                 fileName: fileInfo.nombre_archivo,
                 fileSize: self.formatFileSize(fileInfo.tamanio || 0),
                 isUploaded: true,
+                isPending: false,
                 status: fileInfo.estado || 'pendiente',
+                statusText: M.util.get_string('doc_status_' + (fileInfo.estado || 'pendiente'), 'local_conocer_cert') || 'Pendiente',
+                statusClass: statusClass,
                 docId: fileInfo.id,
-                viewUrl: M.cfg.wwwroot + '/local/conocer_cert/document.php?id=' + fileInfo.id + '&action=view'
+                viewUrl: M.cfg.wwwroot + '/local/conocer_cert/document.php?id=' + fileInfo.id + '&action=view',
+                comentarios: fileInfo.comentarios
             });
         });
         
         // Render the file list template
-        if (files.length > 0) {
-            Templates.render('local_conocer_cert/document_list', {
-                files: files,
-                has_files: true
-            }).then(function(html) {
-                $('#' + self.fileListContainerId).html(html);
-            }).fail(function(err) {
-                Notification.exception(err);
-            });
-        } else {
-            // Show no files message
-            Templates.render('local_conocer_cert/document_list', {
-                files: [],
-                has_files: false
-            }).then(function(html) {
-                $('#' + self.fileListContainerId).html(html);
-            }).fail(function(err) {
-                Notification.exception(err);
-            });
-        }
+        Templates.render('local_conocer_cert/document_list', {
+            files: files,
+            has_files: files.length > 0
+        }).then(function(html) {
+            $(self.fileListContainerSelector).html(html);
+            
+            // Initialize tooltips if Bootstrap is available
+            if ($.fn.tooltip) {
+                $(self.fileListContainerSelector).find('[data-toggle="tooltip"]').tooltip();
+            }
+        }).catch(function(err) {
+            Notification.exception(err);
+        });
     };
     
     /**
@@ -267,41 +297,60 @@ function($, Str, Notification, Ajax, Templates, ModalFactory, ModalEvents) {
      */
     DocumentUploader.prototype.uploadFile = function(docType, file) {
         var self = this;
-        var formData = new FormData();
-        
-        formData.append('documento', file);
-        formData.append('tipo', docType);
-        formData.append('candidato_id', this.options.candidateId);
-        formData.append('sesskey', M.cfg.sesskey);
         
         // Show loading spinner
         var $docElement = $('.doc-item[data-doc-type="' + docType + '"]');
-        $docElement.find('.doc-status').html('<i class="fa fa-spinner fa-spin"></i> Subiendo...');
+        $docElement.find('.doc-status').html('<i class="fa fa-spinner fa-spin"></i> ' + M.util.get_string('uploading', 'local_conocer_cert'));
         
-        return $.ajax({
-            url: this.options.uploadUrl,
-            type: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            dataType: 'json'
-        }).then(function(response) {
-            if (response.success) {
-                // Update the uploaded files record
-                self.uploadedFiles[docType] = response.document;
-                // Remove from pending files
-                delete self.files[docType];
-                // Update the UI
-                self.updateFilesList();
+        // Create a Promise to handle the file reading and upload process
+        return new Promise(function(resolve, reject) {
+            var reader = new FileReader();
+            
+            reader.onload = function(e) {
+                // File contents are in e.target.result as base64
+                var fileContent = e.target.result.split(',')[1]; // Remove the data URL prefix
                 
-                return response;
-            } else {
-                throw new Error(response.message || M.util.get_string('error_file_upload', 'local_conocer_cert'));
-            }
-        }).catch(function(err) {
-            Notification.exception(err);
+                // Call the upload API function
+                Ajax.call([{
+                    methodname: 'local_conocer_cert_upload_document',
+                    args: {
+                        candidateid: self.options.candidateId,
+                        tipo: docType,
+                        filename: file.name,
+                        filecontent: fileContent,
+                        mimetype: file.type
+                    },
+                    done: function(response) {
+                        if (response.success) {
+                            // Update the uploaded files record
+                            self.uploadedFiles[docType] = response.document;
+                            // Remove from pending files
+                            delete self.files[docType];
+                            // Update the UI
+                            self.updateFilesList();
+                            resolve(response);
+                        } else {
+                            var error = new Error(response.message || M.util.get_string('error_file_upload', 'local_conocer_cert'));
+                            reject(error);
+                        }
+                    },
+                    fail: function(error) {
+                        reject(error);
+                    }
+                }]);
+            };
+            
+            reader.onerror = function() {
+                reject(new Error(M.util.get_string('error_reading_file', 'local_conocer_cert')));
+            };
+            
+            // Read the file as a data URL (base64)
+            reader.readAsDataURL(file);
+        }).catch(function(error) {
+            Notification.exception(error);
             // Reset status in UI
             self.updateFilesList();
+            throw error;
         });
     };
     
@@ -318,7 +367,7 @@ function($, Str, Notification, Ajax, Templates, ModalFactory, ModalEvents) {
             promises.push(self.uploadFile(docType, file));
         });
         
-        return $.when.apply($, promises);
+        return Promise.all(promises);
     };
     
     /**
@@ -326,46 +375,72 @@ function($, Str, Notification, Ajax, Templates, ModalFactory, ModalEvents) {
      *
      * @param {Number} docId Document ID
      * @param {String} docType Document type
+     * @return {Promise} Promise that resolves when delete is complete
      */
     DocumentUploader.prototype.deleteFile = function(docId, docType) {
         var self = this;
         
-        // Confirm deletion
-        Str.get_string('confirmdeletedocument', 'local_conocer_cert').then(function(confirmMessage) {
-            ModalFactory.create({
+        // Confirm deletion with a modal
+        return Str.get_strings([
+            {key: 'confirmdeletedocument', component: 'local_conocer_cert'},
+            {key: 'delete', component: 'core'},
+            {key: 'cancel', component: 'core'}
+        ]).then(function(strings) {
+            return ModalFactory.create({
                 type: ModalFactory.types.SAVE_CANCEL,
-                title: Str.get_string('delete'),
-                body: confirmMessage
-            }).then(function(modal) {
-                modal.setSaveButtonText(Str.get_string('delete'));
-                
-                // Handle delete confirmation
-                modal.getRoot().on(ModalEvents.save, function() {
-                    // Send delete request
-                    Ajax.call([{
-                        methodname: 'local_conocer_cert_delete_document',
-                        args: {
-                            documentid: docId,
-                            sesskey: M.cfg.sesskey
-                        },
-                        done: function(response) {
-                            if (response.success) {
-                                // Remove from uploaded files
-                                delete self.uploadedFiles[docType];
-                                // Update the UI
-                                self.updateFilesList();
-                            } else {
-                                Notification.alert('', response.message || M.util.get_string('error_delete_failed', 'local_conocer_cert'));
-                            }
-                        },
-                        fail: function(err) {
-                            Notification.exception(err);
-                        }
-                    }]);
-                });
-                
-                modal.show();
+                title: strings[1], // Delete
+                body: strings[0], // Confirm message
+                buttons: {
+                    save: strings[1], // Delete
+                    cancel: strings[2] // Cancel
+                }
             });
+        }).then(function(modal) {
+            modal.setSaveButtonText(M.util.get_string('delete', 'core'));
+            
+            // Set up the delete action when the user confirms
+            var deferred = $.Deferred();
+            
+            modal.getRoot().on(ModalEvents.save, function() {
+                // Send delete request using the API
+                Ajax.call([{
+                    methodname: 'local_conocer_cert_delete_document',
+                    args: {
+                        documentid: docId
+                    },
+                    done: function(response) {
+                        if (response.success) {
+                            // Remove from uploaded files
+                            delete self.uploadedFiles[docType];
+                            // Update the UI
+                            self.updateFilesList();
+                            deferred.resolve(response);
+                        } else {
+                            var error = new Error(response.message || M.util.get_string('error_delete_failed', 'local_conocer_cert'));
+                            deferred.reject(error);
+                            Notification.exception(error);
+                        }
+                    },
+                    fail: function(error) {
+                        deferred.reject(error);
+                        Notification.exception(error);
+                    }
+                }]);
+            });
+            
+            modal.getRoot().on(ModalEvents.cancel, function() {
+                deferred.reject(new Error('User cancelled'));
+            });
+            
+            modal.show();
+            
+            return deferred.promise();
+        }).catch(function(error) {
+            // Don't show an error if user cancelled
+            if (error.message !== 'User cancelled') {
+                Notification.exception(error);
+            }
+            return $.Deferred().reject(error).promise();
         });
     };
     
@@ -392,20 +467,47 @@ function($, Str, Notification, Ajax, Templates, ModalFactory, ModalEvents) {
         this.files = {};
         this.uploadedFiles = {};
         this.updateFilesList();
-        $('#' + this.formId).find('input[type="file"]').val('');
+        $(this.formSelector).find('input[type="file"]').val('');
+    };
+    
+    /**
+     * Get a list of document types that still need to be uploaded.
+     * 
+     * @return {Array} List of document types that are required but not uploaded
+     */
+    DocumentUploader.prototype.getMissingDocuments = function() {
+        var self = this;
+        var missing = [];
+        
+        this.options.requiredDocTypes.forEach(function(docType) {
+            if (!self.files[docType] && !self.uploadedFiles[docType]) {
+                missing.push(docType);
+            }
+        });
+        
+        return missing;
+    };
+    
+    /**
+     * Check if all required documents are uploaded.
+     * 
+     * @return {Boolean} True if all required documents are uploaded
+     */
+    DocumentUploader.prototype.isComplete = function() {
+        return this.getMissingDocuments().length === 0;
     };
     
     return {
         /**
-         * Initialize the document uploader.
+         * Initialize a new document uploader instance.
          *
-         * @param {String} formId ID of the form containing file inputs
-         * @param {String} fileListContainerId ID of the container where file list will be displayed
+         * @param {String} formSelector Selector for the form containing file inputs
+         * @param {String} fileListContainerSelector Selector for the container where file list will be displayed
          * @param {Object} options Configuration options
-         * @return {DocumentUploader} DocumentUploader instance
+         * @return {DocumentUploader} New DocumentUploader instance
          */
-        init: function(formId, fileListContainerId, options) {
-            return new DocumentUploader(formId, fileListContainerId, options);
+        init: function(formSelector, fileListContainerSelector, options) {
+            return new DocumentUploader(formSelector, fileListContainerSelector, options);
         }
     };
 });

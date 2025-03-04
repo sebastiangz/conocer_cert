@@ -1,0 +1,75 @@
+local/conocer_cert/
+├── classes/
+│   ├── dashboard/
+│   │   ├── candidate_dashboard.php
+│   │   ├── company_dashboard.php
+│   │   ├── evaluator_dashboard.php
+│   │   └── admin_dashboard.php
+│   ├── forms/
+│   │   ├── candidato_form.php
+│   │   ├── empresa_form.php
+│   │   ├── competencia_form.php
+│   │   └── evaluator_form.php
+│   ├── output/
+│   │   ├── renderer.php
+│   │   └── renderable.php
+│   ├── privacy/
+│   │   └── provider.php
+│   ├── task/
+│   │   ├── notify_candidates.php
+│   │   ├── notify_evaluators.php
+│   │   └── expire_certificates.php
+│   ├── external/
+│   │   └── api.php
+│   ├── util/
+│   │   ├── notification.php
+│   │   ├── security.php
+│   │   └── file_validator.php
+│   └── event/
+│       ├── candidate_created.php
+│       ├── certification_completed.php
+│       └── company_registered.php
+├── db/
+│   ├── install.xml
+│   ├── upgrade.php
+│   ├── access.php
+│   ├── events.php
+│   ├── messages.php
+│   └── tasks.php
+├── lang/
+│   ├── en/
+│   │   └── local_conocer_cert.php
+│   └── es/
+│       └── local_conocer_cert.php
+├── pix/
+│   ├── icon.png
+│   ├── icon.svg
+│   └── screenshots/
+│       ├── dashboard.png
+│       └── certification-process.png
+├── templates/
+│   ├── candidate_dashboard.mustache
+│   ├── company_dashboard.mustache
+│   ├── evaluator_dashboard.mustache
+│   ├── admin_dashboard.mustache
+│   ├── certification_card.mustache
+│   └── status_indicator.mustache
+├── amd/
+│   └── src/
+│       ├── dashboard_controller.js
+│       ├── document_uploader.js
+│       └── certification_status.js
+├── pages/
+│   ├── candidates.php
+│   ├── companies.php
+│   ├── competencies.php
+│   ├── evaluators.php
+│   ├── reports.php
+│   ├── dashboard.php
+│   └── mycertifications.php
+├── lib.php
+├── locallib.php
+├── version.php
+├── index.php
+├── settings.php
+└── README.md

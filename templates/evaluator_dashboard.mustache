@@ -1,0 +1,321 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_conocer_cert/evaluator_dashboard
+
+    Evaluator dashboard for the CONOCER certification system.
+
+    Classes required for JS:
+    * none
+
+    Data attributes required for JS:
+    * none
+
+    Context variables required for this template:
+    * fullname - Full name of the evaluator
+    * is_evaluator - Boolean indicating if the user is an evaluator
+    * assigned_candidates - Array of candidates assigned to the evaluator
+    * completed_evaluations - Array of completed evaluations
+    * stats - Object with evaluator statistics
+    * notifications - Array of recent notifications
+    * pending_url - URL for the pending evaluations page
+    * completed_url - URL for the completed evaluations page
+    * profile_url - URL for the evaluator's profile page
+    * has_assigned_candidates - Boolean indicating if there are assigned candidates
+    * has_completed_evaluations - Boolean indicating if there are completed evaluations
+
+    Example context (json):
+    {
+        "fullname": "José Rodríguez Evaluador",
+        "is_evaluator": true,
+        "assigned_candidates": [
+            {
+                "id": 123,
+                "candidate_name": "Juan Pérez García",
+                "competencia": "Impartición de cursos de formación",
+                "nivel": 3,
+                "fecha_asignacion": "14/02/2025",
+                "days_pending": 5,
+                "is_urgent": true,
+                "view_url": "#"
+            }
+        ],
+        "completed_evaluations": [
+            {
+                "id": 45,
+                "candidate_name": "Ana López Gutiérrez",
+                "competencia": "Diseño de cursos de formación",
+                "nivel": 2,
+                "resultado": "Aprobado",
+                "fecha_evaluacion": "10/02/2025",
+                "view_url": "#"
+            }
+        ],
+        "stats": {
+            "total_asignados": 25,
+            "pendientes": 5,
+            "en_progreso": 2,
+            "completados": 18,
+            "ultimos_7_dias": 3
+        },
+        "notifications": [
+            {
+                "id": 123,
+                "message": "Nueva asignación: Juan Pérez García",
+                "time": "15/02/2025 10:30",
+                "is_new": true
+            }
+        ],
+        "pending_url": "#",
+        "completed_url": "#",
+        "profile_url": "#",
+        "has_assigned_candidates": true,
+        "has_completed_evaluations": true
+    }
+}}
+
+{{#is_evaluator}}
+<div class="local-conocer-cert-evaluator-dashboard">
+    <div class="dashboard-header">
+        <h2>{{#str}}evaluator_dashboard, local_conocer_cert{{/str}}</h2>
+        <p class="user-welcome">{{#str}}welcome, local_conocer_cert{{/str}}, {{fullname}}</p>
+    </div>
+
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <!-- Sidebar with stats -->
+            <div class="col-md-3">
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="h5 mb-0">{{#str}}statistics, local_conocer_cert{{/str}}</h3>
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{#str}}total_assignations, local_conocer_cert{{/str}}
+                            <span class="badge badge-primary badge-pill">{{stats.total_asignados}}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{#str}}pending, local_conocer_cert{{/str}}
+                            <span class="badge badge-warning badge-pill">{{stats.pendientes}}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{#str}}in_progress, local_conocer_cert{{/str}}
+                            <span class="badge badge-info badge-pill">{{stats.en_progreso}}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{#str}}completed, local_conocer_cert{{/str}}
+                            <span class="badge badge-success badge-pill">{{stats.completados}}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{#str}}last_7_days, local_conocer_cert{{/str}}
+                            <span class="badge badge-secondary badge-pill">{{stats.ultimos_7_dias}}</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Recent notifications -->
+                <div class="card mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h3 class="h5 mb-0">{{#str}}notifications, local_conocer_cert{{/str}}</h3>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        {{#notifications}}
+                            <a href="#" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{message}}</h6>
+                                    {{#is_new}}<span class="badge badge-pill badge-primary">{{#str}}new, local_conocer_cert{{/str}}</span>{{/is_new}}
+                                </div>
+                                <small>{{time}}</small>
+                            </a>
+                        {{/notifications}}
+                        {{^notifications}}
+                            <div class="list-group-item">
+                                {{#str}}no_notifications, local_conocer_cert{{/str}}
+                            </div>
+                        {{/notifications}}
+                    </div>
+                </div>
+
+                <!-- Quick actions -->
+                <div class="card mb-4">
+                    <div class="card-header bg-secondary text-white">
+                        <h3 class="h5 mb-0">{{#str}}quick_actions, local_conocer_cert{{/str}}</h3>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        <a href="{{pending_url}}" class="list-group-item list-group-item-action">
+                            <i class="fa fa-clipboard-list mr-2"></i> {{#str}}view_pending_evaluations, local_conocer_cert{{/str}}
+                        </a>
+                        <a href="{{completed_url}}" class="list-group-item list-group-item-action">
+                            <i class="fa fa-check-double mr-2"></i> {{#str}}view_completed_evaluations, local_conocer_cert{{/str}}
+                        </a>
+                        <a href="{{profile_url}}" class="list-group-item list-group-item-action">
+                            <i class="fa fa-user-edit mr-2"></i> {{#str}}edit_profile, local_conocer_cert{{/str}}
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main content -->
+            <div class="col-md-9">
+                <!-- Assigned candidates -->
+                {{#has_assigned_candidates}}
+                <div class="card mb-4">
+                    <div class="card-header bg-warning text-white d-flex justify-content-between align-items-center">
+                        <h3 class="h5 mb-0">{{#str}}assigned_candidates, local_conocer_cert{{/str}}</h3>
+                        <span class="badge badge-light">{{stats.pendientes}}</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>{{#str}}candidate, local_conocer_cert{{/str}}</th>
+                                        <th>{{#str}}competency, local_conocer_cert{{/str}}</th>
+                                        <th>{{#str}}level, local_conocer_cert{{/str}}</th>
+                                        <th>{{#str}}assignment_date, local_conocer_cert{{/str}}</th>
+                                        <th>{{#str}}days_pending, local_conocer_cert{{/str}}</th>
+                                        <th>{{#str}}actions, local_conocer_cert{{/str}}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{#assigned_candidates}}
+                                        <tr {{#is_urgent}}class="table-danger"{{/is_urgent}}>
+                                            <td>{{candidate_name}}</td>
+                                            <td>{{competencia}}</td>
+                                            <td>{{nivel}}</td>
+                                            <td>{{fecha_asignacion}}</td>
+                                            <td>
+                                                {{#is_urgent}}
+                                                    <span class="badge badge-danger">{{days_pending}} {{#str}}days, local_conocer_cert{{/str}}</span>
+                                                {{/is_urgent}}
+                                                {{^is_urgent}}
+                                                    <span class="badge badge-warning">{{days_pending}} {{#str}}days, local_conocer_cert{{/str}}</span>
+                                                {{/is_urgent}}
+                                            </td>
+                                            <td>
+                                                <a href="{{view_url}}" class="btn btn-sm btn-primary">
+                                                    <i class="fa fa-clipboard-check mr-1"></i> {{#str}}evaluate, local_conocer_cert{{/str}}
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {{/assigned_candidates}}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card-footer text-right">
+                        <a href="{{pending_url}}" class="btn btn-outline-primary btn-sm">
+                            {{#str}}view_all, local_conocer_cert{{/str}}
+                            <i class="fa fa-arrow-right ml-1"></i>
+                        </a>
+                    </div>
+                </div>
+                {{/has_assigned_candidates}}
+                
+                {{^has_assigned_candidates}}
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="h5 mb-0">{{#str}}assigned_candidates, local_conocer_cert{{/str}}</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info mb-0">
+                            <i class="fa fa-info-circle mr-2"></i> {{#str}}no_pending_evaluations, local_conocer_cert{{/str}}
+                        </div>
+                    </div>
+                </div>
+                {{/has_assigned_candidates}}
+
+                <!-- Recent completed evaluations -->
+                {{#has_completed_evaluations}}
+                <div class="card mb-4">
+                    <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                        <h3 class="h5 mb-0">{{#str}}recent_evaluations, local_conocer_cert{{/str}}</h3>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>{{#str}}candidate, local_conocer_cert{{/str}}</th>
+                                        <th>{{#str}}competency, local_conocer_cert{{/str}}</th>
+                                        <th>{{#str}}level, local_conocer_cert{{/str}}</th>
+                                        <th>{{#str}}result, local_conocer_cert{{/str}}</th>
+                                        <th>{{#str}}evaluation_date, local_conocer_cert{{/str}}</th>
+                                        <th>{{#str}}actions, local_conocer_cert{{/str}}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{#completed_evaluations}}
+                                        <tr>
+                                            <td>{{candidate_name}}</td>
+                                            <td>{{competencia}}</td>
+                                            <td>{{nivel}}</td>
+                                            <td>
+                                                {{#resultado}}
+                                                    {{#str}}{{resultado}}, local_conocer_cert{{/str}}
+                                                {{/resultado}}
+                                            </td>
+                                            <td>{{fecha_evaluacion}}</td>
+                                            <td>
+                                                <a href="{{view_url}}" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fa fa-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {{/completed_evaluations}}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card-footer text-right">
+                        <a href="{{completed_url}}" class="btn btn-outline-primary btn-sm">
+                            {{#str}}view_all, local_conocer_cert{{/str}}
+                            <i class="fa fa-arrow-right ml-1"></i>
+                        </a>
+                    </div>
+                </div>
+                {{/has_completed_evaluations}}
+                
+                {{^has_completed_evaluations}}
+                <div class="card mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h3 class="h5 mb-0">{{#str}}recent_evaluations, local_conocer_cert{{/str}}</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info mb-0">
+                            <i class="fa fa-info-circle mr-2"></i> {{#str}}no_completed_evaluations, local_conocer_cert{{/str}}
+                        </div>
+                    </div>
+                </div>
+                {{/has_completed_evaluations}}
+            </div>
+        </div>
+    </div>
+</div>
+
+{{#js}}
+require(['jquery'], function($) {
+    // Any JavaScript initialization for the evaluator dashboard
+});
+{{/js}}
+{{/is_evaluator}}
+
+{{^is_evaluator}}
+<div class="alert alert-warning">
+    {{#str}}error_permission, local_conocer_cert{{/str}}
+</div>
+{{/is_evaluator}}

@@ -1,0 +1,132 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_conocer_cert/candidate_certifications_table
+
+    Template for displaying a table of candidate certifications.
+
+    Classes required for JS:
+    * none
+
+    Data attributes required for JS:
+    * none
+
+    Context variables required for this template:
+    * userid - ID of the user
+    * has_certifications - Boolean indicating if there are certifications
+    * certifications - Array of certification objects
+
+    Example context (json):
+    {
+        "userid": 123,
+        "has_certifications": true,
+        "certifications": [
+            {
+                "id": 45,
+                "competencia": "Impartición de cursos de formación",
+                "codigo": "EC0217",
+                "nivel": 3,
+                "nivel_texto": "Nivel 3",
+                "fecha": "14/02/2025",
+                "resultado": "aprobado",
+                "resultado_texto": "Aprobado",
+                "resultado_class": "success",
+                "has_certificado": true,
+                "folio": "CERT-2025-00123",
+                "download_url": "#",
+                "is_expired": false,
+                "view_url": "#"
+            }
+        ]
+    }
+}}
+
+<div class="candidate-certifications-container">
+    <h3 class="mb-4">{{#str}}candidate_certifications, local_conocer_cert{{/str}}</h3>
+    
+    {{#has_certifications}}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="thead-light">
+                    <tr>
+                        <th>{{#str}}competency, local_conocer_cert{{/str}}</th>
+                        <th>{{#str}}code, local_conocer_cert{{/str}}</th>
+                        <th>{{#str}}level, local_conocer_cert{{/str}}</th>
+                        <th>{{#str}}status, local_conocer_cert{{/str}}</th>
+                        <th>{{#str}}date, local_conocer_cert{{/str}}</th>
+                        <th>{{#str}}certificate, local_conocer_cert{{/str}}</th>
+                        <th>{{#str}}actions, local_conocer_cert{{/str}}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#certifications}}
+                        <tr>
+                            <td>{{competencia}}</td>
+                            <td><span class="badge badge-secondary">{{codigo}}</span></td>
+                            <td>{{nivel_texto}}</td>
+                            <td>
+                                <span class="badge badge-{{resultado_class}}">
+                                    {{resultado_texto}}
+                                </span>
+                            </td>
+                            <td>{{fecha}}</td>
+                            <td>
+                                {{#has_certificado}}
+                                    <div class="certificate-info">
+                                        <span class="certificate-folio">{{folio}}</span>
+                                        {{#is_expired}}
+                                            <span class="badge badge-danger">{{#str}}expired, local_conocer_cert{{/str}}</span>
+                                        {{/is_expired}}
+                                    </div>
+                                {{/has_certificado}}
+                                {{^has_certificado}}
+                                    <span class="text-muted">{{#str}}no_certificate, local_conocer_cert{{/str}}</span>
+                                {{/has_certificado}}
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{{view_url}}" class="btn btn-sm btn-outline-primary" title="{{#str}}view, local_conocer_cert{{/str}}">
+                                        <i class="fa fa-eye"></i>
+                                    </a>
+                                    {{#has_certificado}}
+                                        {{#download_url}}
+                                            <a href="{{download_url}}" class="btn btn-sm btn-outline-success" title="{{#str}}download_certificate, local_conocer_cert{{/str}}">
+                                                <i class="fa fa-download"></i>
+                                            </a>
+                                        {{/download_url}}
+                                    {{/has_certificado}}
+                                </div>
+                            </td>
+                        </tr>
+                    {{/certifications}}
+                </tbody>
+            </table>
+        </div>
+    {{/has_certifications}}
+    
+    {{^has_certifications}}
+        <div class="alert alert-info">
+            <i class="fa fa-info-circle mr-2"></i> {{#str}}no_certifications, local_conocer_cert{{/str}}
+        </div>
+        
+        <div class="text-center mt-4">
+            <a href="{{config.wwwroot}}/local/conocer_cert/candidate/new_request.php" class="btn btn-primary">
+                <i class="fa fa-plus-circle mr-2"></i> {{#str}}request_certification, local_conocer_cert{{/str}}
+            </a>
+        </div>
+    {{/has_certifications}}
+</div>

@@ -1,0 +1,193 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_conocer_cert/certification_progress
+
+    Template for displaying certification progress.
+
+    Classes required for JS:
+    * none
+
+    Data attributes required for JS:
+    * none
+
+    Context variables required for this template:
+    * current_stage - Current stage of the process
+    * stages - Array of stages in the process
+    * progress_percent - Percentage of progress completion
+    * has_result - Boolean indicating if there is a result
+    * result - Result of the certification
+    * result_class - CSS class for the result status
+
+    Example context (json):
+    {
+        "current_stage": "evaluacion",
+        "stages": [
+            {
+                "name": "solicitud",
+                "label": "Solicitud",
+                "position": 1,
+                "status": "completed",
+                "is_current": false,
+                "is_completed": true,
+                "is_pending": false
+            },
+            {
+                "name": "documentacion",
+                "label": "Documentación",
+                "position": 2,
+                "status": "completed",
+                "is_current": false,
+                "is_completed": true,
+                "is_pending": false
+            },
+            {
+                "name": "evaluacion",
+                "label": "Evaluación",
+                "position": 3,
+                "status": "current",
+                "is_current": true,
+                "is_completed": false,
+                "is_pending": false
+            },
+            {
+                "name": "resultados",
+                "label": "Resultados",
+                "position": 4,
+                "status": "pending",
+                "is_current": false,
+                "is_completed": false,
+                "is_pending": true
+            }
+        ],
+        "progress_percent": 50,
+        "has_result": false,
+        "result": "",
+        "result_class": ""
+    }
+}}
+
+<div class="certification-progress-container mb-4">
+    {{#has_result}}
+    <div class="alert alert-{{result_class}} mb-3">
+        <strong>{{#str}}process_result, local_conocer_cert{{/str}}:</strong> 
+        {{#str}}resultado_{{result}}, local_conocer_cert{{/str}}
+    </div>
+    {{/has_result}}
+    
+    <div class="progress mb-3">
+        <div class="progress-bar bg-success" role="progressbar" style="width: {{progress_percent}}%" 
+             aria-valuenow="{{progress_percent}}" aria-valuemin="0" aria-valuemax="100">
+            {{progress_percent}}%
+        </div>
+    </div>
+    
+    <div class="certification-steps">
+        <div class="row no-gutters">
+            {{#stages}}
+            <div class="col-md-3 text-center">
+                <div class="step-container">
+                    <div class="step-circle {{status}}">
+                        {{position}}
+                    </div>
+                    <div class="step-name">
+                        {{label}}
+                        {{#is_current}}
+                        <span class="badge badge-primary">{{#str}}current, local_conocer_cert{{/str}}</span>
+                        {{/is_current}}
+                    </div>
+                    <div class="step-status">
+                        {{#is_completed}}
+                        <i class="fa fa-check-circle text-success" aria-hidden="true"></i>
+                        {{/is_completed}}
+                        {{#is_current}}
+                        <i class="fa fa-circle text-primary" aria-hidden="true"></i>
+                        {{/is_current}}
+                        {{#is_pending}}
+                        <i class="fa fa-circle-o text-muted" aria-hidden="true"></i>
+                        {{/is_pending}}
+                    </div>
+                </div>
+            </div>
+            {{/stages}}
+        </div>
+    </div>
+</div>
+
+<style>
+.certification-progress-container {
+    margin-bottom: 30px;
+}
+.certification-steps {
+    position: relative;
+    margin-top: 20px;
+}
+.step-container {
+    padding: 0 10px;
+}
+.step-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin: 0 auto 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    position: relative;
+    z-index: 2;
+}
+.step-circle.completed {
+    background-color: #28a745;
+    color: white;
+}
+.step-circle.current {
+    background-color: #007bff;
+    color: white;
+    border: 2px solid #007bff;
+}
+.step-circle.pending {
+    background-color: #f8f9fa;
+    color: #6c757d;
+    border: 2px solid #dee2e6;
+}
+.step-name {
+    font-size: 0.9rem;
+    line-height: 1.2;
+    height: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.step-status {
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.certification-steps .row:before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    height: 2px;
+    background-color: #dee2e6;
+    width: 75%;
+    left: 12.5%;
+    z-index: 1;
+}
+</style>

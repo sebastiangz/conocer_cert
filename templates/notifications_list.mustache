@@ -1,0 +1,145 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_conocer_cert/notifications_list
+
+    Template for displaying a list of notifications.
+
+    Classes required for JS:
+    * none
+
+    Data attributes required for JS:
+    * none
+
+    Context variables required for this template:
+    * has_notifications - Boolean indicating if there are notifications
+    * count - Number of notifications
+    * notifications - Array of notification objects
+    * has_more - Boolean indicating if there are more notifications
+    * view_all_url - URL to view all notifications
+
+    Example context (json):
+    {
+        "has_notifications": true,
+        "count": 5,
+        "notifications": [
+            {
+                "id": 123,
+                "asunto": "Documentos aprobados para certificación",
+                "mensaje": "Sus documentos para la certificación en...",
+                "leido": 0,
+                "is_unread": true,
+                "fecha": "14/02/2025",
+                "from_name": "Sistema de Certificaciones",
+                "mark_read_url": "#",
+                "view_url": "#"
+            }
+        ],
+        "has_more": true,
+        "view_all_url": "#"
+    }
+}}
+
+<div class="notifications-list-container">
+    <div class="notifications-header d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0">
+            {{#str}}notifications, local_conocer_cert{{/str}}
+            {{#count}}
+                <span class="badge badge-pill badge-primary ml-2">{{count}}</span>
+            {{/count}}
+        </h4>
+        {{#has_notifications}}
+            <a href="{{config.wwwroot}}/local/conocer_cert/notifications.php?action=mark_all_read" class="btn btn-outline-secondary btn-sm">
+                <i class="fa fa-check-circle mr-1"></i> {{#str}}notification_mark_all_read, local_conocer_cert{{/str}}
+            </a>
+        {{/has_notifications}}
+    </div>
+
+    {{#has_notifications}}
+        <div class="list-group notifications-list">
+            {{#notifications}}
+                <div class="list-group-item list-group-item-action flex-column align-items-start {{#is_unread}}unread{{/is_unread}}">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1">{{asunto}}</h5>
+                        <div>
+                            {{#is_unread}}
+                                <span class="badge badge-primary">{{#str}}unread, local_conocer_cert{{/str}}</span>
+                            {{/is_unread}}
+                            <small class="text-muted ml-2">{{fecha}}</small>
+                        </div>
+                    </div>
+                    <p class="mb-1">{{mensaje}}</p>
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        <small class="text-muted">{{#str}}from, local_conocer_cert{{/str}}: {{from_name}}</small>
+                        <div class="btn-group">
+                            {{#is_unread}}
+                                <a href="{{mark_read_url}}" class="btn btn-outline-primary btn-sm" title="{{#str}}notification_mark_read, local_conocer_cert{{/str}}">
+                                    <i class="fa fa-check"></i>
+                                </a>
+                            {{/is_unread}}
+                            <a href="{{view_url}}" class="btn btn-outline-secondary btn-sm" title="{{#str}}view, local_conocer_cert{{/str}}">
+                                <i class="fa fa-eye"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {{/notifications}}
+        </div>
+        
+        {{#has_more}}
+            <div class="text-center mt-3">
+                <a href="{{view_all_url}}" class="btn btn-outline-primary">
+                    {{#str}}notification_view_all, local_conocer_cert{{/str}}
+                </a>
+            </div>
+        {{/has_more}}
+    {{/has_notifications}}
+    
+    {{^has_notifications}}
+        <div class="alert alert-info">
+            <i class="fa fa-info-circle mr-2"></i> {{#str}}notification_no_notifications, local_conocer_cert{{/str}}
+        </div>
+    {{/has_notifications}}
+</div>
+
+<style>
+.notifications-list .unread {
+    border-left: 4px solid #007bff;
+}
+.notifications-list .list-group-item {
+    transition: background-color 0.2s ease;
+}
+.notifications-list .list-group-item:hover {
+    background-color: #f8f9fa;
+}
+</style>
+
+{{#js}}
+require(['jquery'], function($) {
+    // Mark as read when clicked
+    $('.notifications-list .unread').on('click', function(e) {
+        if (!$(e.target).closest('a').length) {
+            var markReadUrl = $(this).find('[title="{{#str}}notification_mark_read, local_conocer_cert{{/str}}"]').attr('href');
+            if (markReadUrl) {
+                $.get(markReadUrl);
+                $(this).removeClass('unread');
+                $(this).find('.badge-primary').remove();
+            }
+        }
+    });
+});
+{{/js}}

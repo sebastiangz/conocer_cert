@@ -1,0 +1,157 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_conocer_cert/print_certificate
+
+    Template for printing a certificate.
+
+    Classes required for JS:
+    * none
+
+    Data attributes required for JS:
+    * none
+
+    Context variables required for this template:
+    * certificate_id - ID of the certificate
+    * folio - Certificate folio number
+    * fecha_emision - Certificate issue date
+    * fullname - Full name of the certificate recipient
+    * curp - CURP of the recipient
+    * competencia - Name of the competency
+    * codigo_competencia - Code of the competency
+    * nivel - Level of the competency
+    * nivel_texto - Text representation of the level
+    * site_name - Name of the site
+    * verification_url - URL for certificate verification
+    * verification_hash - Hash for certificate verification
+    * has_vencimiento - Boolean indicating if there is an expiration date
+    * fecha_vencimiento - Certificate expiration date
+    * emisor_nombre - Name of the certificate issuer
+
+    Example context (json):
+    {
+        "certificate_id": 123,
+        "folio": "CERT-2025-00123",
+        "fecha_emision": "15/02/2025",
+        "fullname": "Juan Pérez García",
+        "curp": "PEGJ850101HDFRZN09",
+        "competencia": "Impartición de cursos de formación del capital humano de manera presencial grupal",
+        "codigo_competencia": "EC0217",
+        "nivel": 3,
+        "nivel_texto": "Nivel 3",
+        "site_name": "Sistema de Certificaciones CONOCER",
+        "verification_url": "https://example.com/verify?hash=abc123",
+        "verification_hash": "abc123def456",
+        "has_vencimiento": true,
+        "fecha_vencimiento": "15/02/2030",
+        "emisor_nombre": "María Rodríguez, Certificadora"
+    }
+}}
+
+<div class="conocer-certificate-container" id="printable-certificate">
+    <div class="certificate-header">
+        <div class="site-logo">
+            <img src="{{config.wwwroot}}/local/conocer_cert/pix/logo_conocer.png" alt="Logo CONOCER">
+        </div>
+        <div class="certificate-title">
+            <h1>{{#str}}certificate_of_competency, local_conocer_cert{{/str}}</h1>
+            <h2>{{site_name}}</h2>
+        </div>
+        <div class="certificate-number">
+            <div class="folio-container">
+                <span class="folio-label">{{#str}}folio, local_conocer_cert{{/str}}:</span>
+                <span class="folio-value">{{folio}}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="certificate-body">
+        <div class="certificate-statement">
+            <p class="statement-intro">{{#str}}certificate_states, local_conocer_cert{{/str}}</p>
+            
+            <p class="recipient-name">{{fullname}}</p>
+            <p class="recipient-id">CURP: {{curp}}</p>
+            
+            <p class="statement-competency">
+                {{#str}}has_demonstrated_competency, local_conocer_cert{{/str}}:
+            </p>
+            
+            <div class="competency-details">
+                <h3>{{codigo_competencia}}</h3>
+                <h4>{{competencia}}</h4>
+                <p class="competency-level">{{nivel_texto}}</p>
+            </div>
+            
+            <p class="statement-date">
+                {{#str}}certificate_issue_date, local_conocer_cert{{/str}}: {{fecha_emision}}
+            </p>
+            
+            {{#has_vencimiento}}
+            <p class="statement-expiry">
+                {{#str}}certificate_expiry_date, local_conocer_cert{{/str}}: {{fecha_vencimiento}}
+            </p>
+            {{/has_vencimiento}}
+        </div>
+        
+        <div class="certificate-signatures">
+            <div class="signature-block">
+                <div class="signature-line"></div>
+                <p class="signature-name">{{emisor_nombre}}</p>
+                <p class="signature-title">{{#str}}certification_authority, local_conocer_cert{{/str}}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="certificate-footer">
+        <div class="verification-info">
+            <p>{{#str}}verification_instructions, local_conocer_cert{{/str}}</p>
+            <p class="verification-url">{{verification_url}}</p>
+            <p class="verification-code">
+                <span class="verification-label">{{#str}}verification_code, local_conocer_cert{{/str}}:</span>
+                <span class="verification-hash">{{verification_hash}}</span>
+            </p>
+        </div>
+        <div class="certificate-seal">
+            <div class="qr-code" id="qr-code"></div>
+        </div>
+    </div>
+</div>
+
+<div class="print-controls">
+    <button type="button" class="btn btn-primary" id="print-button">
+        <i class="fa fa-print mr-2"></i> {{#str}}printcertificate, local_conocer_cert{{/str}}
+    </button>
+    <a href="{{config.wwwroot}}/local/conocer_cert/candidate/download_certificate.php?id={{certificate_id}}" class="btn btn-success ml-2">
+        <i class="fa fa-download mr-2"></i> {{#str}}downloadcertificate, local_conocer_cert{{/str}}
+    </a>
+</div>
+
+{{#js}}
+require(['jquery', 'local_conocer_cert/qrcode'], function($, QRCode) {
+    // Generate QR Code for verification
+    new QRCode(document.getElementById("qr-code"), {
+        text: "{{verification_url}}",
+        width: 100,
+        height: 100
+    });
+    
+    // Print functionality
+    $('#print-button').on('click', function() {
+        window.print();
+    });
+});
+{{/js}}

@@ -15,9 +15,9 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 {{!
-    @template local_conocer/candidate_dashboard
+    @template local_conocer_cert/candidate_dashboard
 
-    Candidate dashboard template for the CONOCER certification system.
+    Candidate dashboard for the CONOCER certification system.
 
     Classes required for JS:
     * none
@@ -26,122 +26,285 @@
     * none
 
     Context variables required for this template:
-    * certifications - Array of certification objects the candidate is enrolled in
-    * has_certifications - Boolean indicating if the candidate has any certifications
-    * pending_evaluations - Number of pending evaluations
-    * completed_certifications - Number of completed certifications
-    * in_progress_certifications - Number of certifications in progress
-    * available_standards - Array of standards available for registration
-    * has_available_standards - Boolean indicating if there are standards available
+    * fullname - Full name of the candidate
+    * requests - Array of candidate requests
+    * pending_documents - Array of documents waiting to be uploaded
+    * active_processes - Array of active certification processes
+    * completed_certifications - Array of completed certifications
+    * notifications - Array of notifications
+    * has_pending_documents - Boolean indicating if there are pending documents
+    * has_active_processes - Boolean indicating if there are active processes
+    * has_completed_certifications - Boolean indicating if there are completed certifications
 
     Example context (json):
     {
-        "certifications": [
+        "fullname": "Juan Pérez García",
+        "requests": [
             {
-                "id": 1,
-                "standard_name": "EC0217: Impartición de cursos de formación del capital humano de manera presencial grupal",
-                "status": "in_progress",
-                "progress_percentage": 45,
-                "next_step": "Preparación para evaluación diagnóstica",
-                "last_updated": "12/02/2023",
-                "evaluator_name": "Juan Pérez González"
+                "id": 123,
+                "competencia": "Impartición de cursos de formación",
+                "codigo": "EC0217",
+                "nivel": 3,
+                "estado": "Pendiente",
+                "fecha": "14/02/2025",
+                "view_url": "#"
             }
         ],
-        "has_certifications": true,
-        "pending_evaluations": 2,
-        "completed_certifications": 1,
-        "in_progress_certifications": 2,
-        "available_standards": [
+        "pending_documents": [
             {
-                "id": 2,
-                "standard_code": "EC0301",
-                "standard_name": "Diseño de cursos de formación del capital humano de manera presencial grupal, sus instrumentos de evaluación y manuales del curso"
+                "request_id": 123,
+                "competencia": "Impartición de cursos de formación",
+                "nivel": 3,
+                "documentos": "Identificación oficial, CURP",
+                "upload_url": "#"
             }
         ],
-        "has_available_standards": true
+        "active_processes": [
+            {
+                "request_id": 123,
+                "process_id": 45,
+                "competencia": "Impartición de cursos de formación",
+                "nivel": 3,
+                "etapa": "Evaluación",
+                "evaluador": "María González Evaluador",
+                "fecha_inicio": "14/02/2025",
+                "view_url": "#"
+            }
+        ],
+        "completed_certifications": [
+            {
+                "request_id": 100,
+                "certification_id": 22,
+                "competencia": "Diseño de cursos de formación",
+                "nivel": 2,
+                "resultado": "Aprobado",
+                "fecha_fin": "10/01/2025",
+                "view_url": "#",
+                "download_url": "#"
+            }
+        ],
+        "notifications": [
+            {
+                "id": 45,
+                "message": "Documentos aprobados para su solicitud",
+                "time": "12/02/2025 10:30",
+                "is_new": true
+            }
+        ],
+        "has_pending_documents": true,
+        "has_active_processes": true,
+        "has_completed_certifications": true
     }
 }}
 
-<div class="local-conocer-candidate-dashboard">
+<div class="local-conocer-cert-candidate-dashboard">
     <div class="dashboard-header">
-        <h2>{{#str}}candidate_dashboard_title, local_conocer{{/str}}</h2>
-        <p class="dashboard-welcome">{{#str}}candidate_dashboard_welcome, local_conocer{{/str}}</p>
+        <h2>{{#str}}candidate_dashboard, local_conocer_cert{{/str}}</h2>
+        <p class="user-welcome">{{#str}}welcome, local_conocer_cert{{/str}}, {{fullname}}</p>
     </div>
 
-    <div class="dashboard-stats">
-        <div class="stat-box">
-            <span class="stat-number">{{pending_evaluations}}</span>
-            <span class="stat-label">{{#str}}pending_evaluations, local_conocer{{/str}}</span>
-        </div>
-        <div class="stat-box">
-            <span class="stat-number">{{completed_certifications}}</span>
-            <span class="stat-label">{{#str}}completed_certifications, local_conocer{{/str}}</span>
-        </div>
-        <div class="stat-box">
-            <span class="stat-number">{{in_progress_certifications}}</span>
-            <span class="stat-label">{{#str}}in_progress_certifications, local_conocer{{/str}}</span>
-        </div>
-    </div>
-
-    <div class="dashboard-main">
-        <div class="dashboard-section">
-            <h3>{{#str}}my_certifications, local_conocer{{/str}}</h3>
-            
-            {{#has_certifications}}
-                <div class="certification-list">
-                    {{#certifications}}
-                        {{> local_conocer/certification_card }}
-                    {{/certifications}}
-                </div>
-            {{/has_certifications}}
-            
-            {{^has_certifications}}
-                <div class="empty-state">
-                    <div class="empty-state-icon">
-                        <i class="fa fa-certificate" aria-hidden="true"></i>
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <!-- Sidebar with notifications -->
+            <div class="col-md-3">
+                <!-- Notifications -->
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="h5 mb-0">{{#str}}notifications, local_conocer_cert{{/str}}</h3>
                     </div>
-                    <p>{{#str}}no_certifications_message, local_conocer{{/str}}</p>
-                    <a href="{{config.wwwroot}}/local/conocer/available_standards.php" class="btn btn-primary">
-                        {{#str}}browse_standards, local_conocer{{/str}}
-                    </a>
+                    <div class="list-group list-group-flush">
+                        {{#notifications}}
+                            <a href="#" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{message}}</h6>
+                                    {{#is_new}}<span class="badge badge-pill badge-primary">{{#str}}new, local_conocer_cert{{/str}}</span>{{/is_new}}
+                                </div>
+                                <small>{{time}}</small>
+                            </a>
+                        {{/notifications}}
+                        {{^notifications}}
+                            <div class="list-group-item">
+                                {{#str}}no_notifications, local_conocer_cert{{/str}}
+                            </div>
+                        {{/notifications}}
+                    </div>
                 </div>
-            {{/has_certifications}}
-        </div>
 
-        {{#has_available_standards}}
-            <div class="dashboard-section">
-                <h3>{{#str}}available_standards, local_conocer{{/str}}</h3>
-                <div class="available-standards-list">
-                    {{#available_standards}}
-                        <div class="standard-card">
-                            <div class="standard-info">
-                                <h4>{{standard_code}}</h4>
-                                <p>{{standard_name}}</p>
-                            </div>
-                            <div class="standard-actions">
-                                <a href="{{config.wwwroot}}/local/conocer/register_standard.php?id={{id}}" class="btn btn-outline-primary">
-                                    {{#str}}register_standard, local_conocer{{/str}}
-                                </a>
-                            </div>
-                        </div>
-                    {{/available_standards}}
+                <!-- Quick actions -->
+                <div class="card mb-4">
+                    <div class="card-header bg-secondary text-white">
+                        <h3 class="h5 mb-0">{{#str}}quick_actions, local_conocer_cert{{/str}}</h3>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        <a href="{{config.wwwroot}}/local/conocer_cert/candidate/new_request.php" class="list-group-item list-group-item-action">
+                            <i class="fa fa-plus-circle mr-2"></i> {{#str}}request_certification, local_conocer_cert{{/str}}
+                        </a>
+                        <a href="{{config.wwwroot}}/local/conocer_cert/candidate/my_certifications.php" class="list-group-item list-group-item-action">
+                            <i class="fa fa-certificate mr-2"></i> {{#str}}mycertifications, local_conocer_cert{{/str}}
+                        </a>
+                        <a href="{{config.wwwroot}}/local/conocer_cert/candidate/view_documents.php" class="list-group-item list-group-item-action">
+                            <i class="fa fa-file-alt mr-2"></i> {{#str}}view_documents, local_conocer_cert{{/str}}
+                        </a>
+                    </div>
                 </div>
             </div>
-        {{/has_available_standards}}
-    </div>
 
-    <div class="dashboard-actions">
-        <a href="{{config.wwwroot}}/local/conocer/my_certificates.php" class="btn btn-secondary">
-            {{#str}}view_certificates, local_conocer{{/str}}
-        </a>
-        <a href="{{config.wwwroot}}/local/conocer/profile_settings.php" class="btn btn-secondary">
-            {{#str}}profile_settings, local_conocer{{/str}}
-        </a>
+            <!-- Main content -->
+            <div class="col-md-9">
+                <!-- Pending documents section -->
+                {{#has_pending_documents}}
+                <div class="card mb-4 border-warning">
+                    <div class="card-header bg-warning text-white">
+                        <h3 class="h5 mb-0">
+                            <i class="fa fa-exclamation-triangle mr-2"></i>
+                            {{#str}}pendingdocuments, local_conocer_cert{{/str}}
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-warning">
+                            <p>{{#str}}pending_documents_message, local_conocer_cert{{/str}}</p>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>{{#str}}competency, local_conocer_cert{{/str}}</th>
+                                        <th>{{#str}}level, local_conocer_cert{{/str}}</th>
+                                        <th>{{#str}}pending_docs, local_conocer_cert{{/str}}</th>
+                                        <th>{{#str}}actions, local_conocer_cert{{/str}}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{#pending_documents}}
+                                        <tr>
+                                            <td>{{competencia}}</td>
+                                            <td>{{nivel}}</td>
+                                            <td>{{documentos}}</td>
+                                            <td>
+                                                <a href="{{upload_url}}" class="btn btn-sm btn-warning">
+                                                    <i class="fa fa-upload mr-1"></i> {{#str}}upload, local_conocer_cert{{/str}}
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {{/pending_documents}}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                {{/has_pending_documents}}
+
+                <!-- Active processes section -->
+                {{#has_active_processes}}
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="h5 mb-0">{{#str}}activeprocesses, local_conocer_cert{{/str}}</h3>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>{{#str}}competency, local_conocer_cert{{/str}}</th>
+                                        <th>{{#str}}level, local_conocer_cert{{/str}}</th>
+                                        <th>{{#str}}stage, local_conocer_cert{{/str}}</th>
+                                        <th>{{#str}}evaluator, local_conocer_cert{{/str}}</th>
+                                        <th>{{#str}}startdate, local_conocer_cert{{/str}}</th>
+                                        <th>{{#str}}actions, local_conocer_cert{{/str}}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{#active_processes}}
+                                        <tr>
+                                            <td>{{competencia}}</td>
+                                            <td>{{nivel}}</td>
+                                            <td>{{etapa}}</td>
+                                            <td>{{evaluador}}</td>
+                                            <td>{{fecha_inicio}}</td>
+                                            <td>
+                                                <a href="{{view_url}}" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fa fa-eye"></i> {{#str}}view_details, local_conocer_cert{{/str}}
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {{/active_processes}}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                {{/has_active_processes}}
+
+                <!-- Completed certifications section -->
+                {{#has_completed_certifications}}
+                <div class="card mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h3 class="h5 mb-0">{{#str}}completedcertifications, local_conocer_cert{{/str}}</h3>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>{{#str}}competency, local_conocer_cert{{/str}}</th>
+                                        <th>{{#str}}level, local_conocer_cert{{/str}}</th>
+                                        <th>{{#str}}result, local_conocer_cert{{/str}}</th>
+                                        <th>{{#str}}completion_date, local_conocer_cert{{/str}}</th>
+                                        <th>{{#str}}actions, local_conocer_cert{{/str}}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{#completed_certifications}}
+                                        <tr>
+                                            <td>{{competencia}}</td>
+                                            <td>{{nivel}}</td>
+                                            <td>{{resultado}}</td>
+                                            <td>{{fecha_fin}}</td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <a href="{{view_url}}" class="btn btn-sm btn-outline-primary">
+                                                        <i class="fa fa-eye"></i>
+                                                    </a>
+                                                    {{#download_url}}
+                                                        <a href="{{download_url}}" class="btn btn-sm btn-outline-success">
+                                                            <i class="fa fa-download"></i> {{#str}}download_certificate, local_conocer_cert{{/str}}
+                                                        </a>
+                                                    {{/download_url}}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {{/completed_certifications}}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                {{/has_completed_certifications}}
+
+                <!-- If no activity is present, show welcome message -->
+                {{^has_pending_documents}}
+                {{^has_active_processes}}
+                {{^has_completed_certifications}}
+                    <div class="card mb-4">
+                        <div class="card-body text-center p-5">
+                            <i class="fa fa-certificate fa-4x mb-3 text-muted"></i>
+                            <h3>{{#str}}welcome_to_certification, local_conocer_cert{{/str}}</h3>
+                            <p class="lead">{{#str}}no_activity_message, local_conocer_cert{{/str}}</p>
+                            <a href="{{config.wwwroot}}/local/conocer_cert/candidate/new_request.php" class="btn btn-primary btn-lg mt-3">
+                                <i class="fa fa-plus-circle mr-2"></i> {{#str}}start_certification_process, local_conocer_cert{{/str}}
+                            </a>
+                        </div>
+                    </div>
+                {{/has_completed_certifications}}
+                {{/has_active_processes}}
+                {{/has_pending_documents}}
+            </div>
+        </div>
     </div>
 </div>
 
 {{#js}}
-require(['jquery', 'local_conocer/candidate_dashboard'], function($, Dashboard) {
-    new Dashboard();
+require(['jquery'], function($) {
+    // Any JavaScript initialization for the candidate dashboard
 });
 {{/js}}

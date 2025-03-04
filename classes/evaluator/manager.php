@@ -1,6 +1,5 @@
 <?php
 // Archivo: local/conocer_cert/classes/evaluator/manager.php
-// Sebastian Gonzalez Zepeda sgonzalez@infraestructuragis.com
 // Gestión de evaluadores externos para certificaciones CONOCER
 
 namespace local_conocer_cert\evaluator;

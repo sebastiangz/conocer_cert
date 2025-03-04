@@ -17,12 +17,9 @@
 /**
  * Internal library of functions for local_conocer_cert
  *
- * All functions specified in this file are to be considered internal and should not
- * be called directly from outside the plugin.
- *
- * @package   local_conocer_cert
- * @copyright 2025 Sebastian Gonzalez Zepeda sgonzalez@infraestructuragis.com
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package    local_conocer_cert
+ * @copyright  2025 Sebastian Gonzalez Zepeda sgonzalez@infraestructuragis.com
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
@@ -30,259 +27,173 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot . '/local/conocer_cert/lib.php');
 
 /**
- * Get candidate dashboard data for the specified user
- *
- * @param int $userid User ID
- * @return \local_conocer_cert\dashboard\candidate_dashboard Dashboard object
- */
-function local_conocer_cert_get_candidate_dashboard($userid) {
-    // Create and return candidate dashboard
-    $dashboard = new \local_conocer_cert\dashboard\candidate_dashboard(
-        \core_user::get_user($userid)
-    );
-    
-    return $dashboard;
-}
-
-/**
- * Get evaluator dashboard data for the specified user
- *
- * @param int $userid User ID
- * @return \local_conocer_cert\dashboard\evaluator_dashboard Dashboard object
- */
-function local_conocer_cert_get_evaluator_dashboard($userid) {
-    // Create and return evaluator dashboard
-    $dashboard = new \local_conocer_cert\dashboard\evaluator_dashboard(
-        \core_user::get_user($userid)
-    );
-    
-    return $dashboard;
-}
-
-/**
- * Get company dashboard data for the specified user
- *
- * @param int $userid User ID
- * @return \local_conocer_cert\dashboard\company_dashboard Dashboard object
- */
-function local_conocer_cert_get_company_dashboard($userid) {
-    // Create and return company dashboard
-    $dashboard = new \local_conocer_cert\dashboard\company_dashboard(
-        \core_user::get_user($userid)
-    );
-    
-    return $dashboard;
-}
-
-/**
- * Get admin dashboard data for the specified user
- *
- * @param int $userid User ID
- * @return \local_conocer_cert\dashboard\admin_dashboard Dashboard object
- */
-function local_conocer_cert_get_admin_dashboard($userid) {
-    // Create and return admin dashboard
-    $dashboard = new \local_conocer_cert\dashboard\admin_dashboard(
-        \core_user::get_user($userid)
-    );
-    
-    return $dashboard;
-}
-
-/**
- * Get candidate data for the specified ID
+ * Get all certification processes for a candidate
  *
  * @param int $candidateid Candidate ID
- * @return object|false Candidate data or false if not found
+ * @return array Array of certification processes
  */
-function local_conocer_cert_get_candidate($candidateid) {
+function local_conocer_cert_get_candidate_processes($candidateid) {
     global $DB;
     
-    // Get candidate record
-    $candidate = $DB->get_record('local_conocer_candidatos', ['id' => $candidateid]);
-    
-    if (!$candidate) {
-        return false;
-    }
-    
-    // Get additional data
-    $user = $DB->get_record('user', ['id' => $candidate->userid]);
-    $competencia = $DB->get_record('local_conocer_competencias', ['id' => $candidate->competencia_id]);
-    
-    // Add user data
-    $candidate->user_fullname = fullname($user);
-    $candidate->user_email = $user->email;
-    
-    // Add competency data
-    $candidate->competencia_nombre = $competencia ? $competencia->nombre : '';
-    $candidate->competencia_codigo = $competencia ? $competencia->codigo : '';
-    
-    return $candidate;
+    // Get all processes for this candidate
+    return $DB->get_records('local_conocer_procesos', ['candidato_id' => $candidateid], 'fecha_inicio DESC');
 }
 
 /**
- * Get candidate documents for the specified candidate ID
+ * Get all documents for a candidate
  *
  * @param int $candidateid Candidate ID
- * @return array Documents array
+ * @return array Array of documents
  */
 function local_conocer_cert_get_candidate_documents($candidateid) {
     global $DB;
     
-    // Get document records
-    $documents = $DB->get_records('local_conocer_documentos', ['candidato_id' => $candidateid]);
-    
-    return $documents;
+    // Get all documents for this candidate
+    return $DB->get_records('local_conocer_documentos', ['candidato_id' => $candidateid]);
 }
 
 /**
- * Get certification process for a candidate
+ * Get pending documents for a candidate
  *
  * @param int $candidateid Candidate ID
- * @return object|false Process data or false if not found
+ * @return array Array of document types that are still pending
  */
-function local_conocer_cert_get_candidate_process($candidateid) {
+function local_conocer_cert_get_pending_documents($candidateid) {
     global $DB;
     
-    // Get process record
-    $process = $DB->get_record('local_conocer_procesos', ['candidato_id' => $candidateid]);
-    
-    if (!$process) {
-        return false;
+    // Get candidate's competency to determine required documents
+    $candidate = $DB->get_record('local_conocer_candidatos', ['id' => $candidateid]);
+    if (!$candidate) {
+        return [];
     }
     
-    // Get evaluator data if assigned
-    if (!empty($process->evaluador_id)) {
-        $evaluator = $DB->get_record('user', ['id' => $process->evaluador_id]);
-        $process->evaluador_nombre = fullname($evaluator);
+    // Get competency details
+    $competency = $DB->get_record('local_conocer_competencias', ['id' => $candidate->competencia_id]);
+    if (!$competency || empty($competency->documentos_requeridos)) {
+        // Default required documents if not specified
+        $requiredDocs = ['id_oficial', 'curp_doc', 'comprobante_domicilio', 'evidencia_laboral', 'fotografia'];
+    } else {
+        $requiredDocs = explode(',', $competency->documentos_requeridos);
     }
     
-    return $process;
+    // Get already uploaded documents
+    $existingDocs = $DB->get_fieldset_select('local_conocer_documentos', 'tipo', 'candidato_id = :candidateid', 
+        ['candidateid' => $candidateid]);
+    
+    // Return the difference (required docs that haven't been uploaded)
+    return array_diff($requiredDocs, $existingDocs);
 }
 
 /**
- * Get certificate for a process
+ * Check if a candidate has all required documents uploaded
  *
- * @param int $processid Process ID
- * @return object|false Certificate data or false if not found
+ * @param int $candidateid Candidate ID
+ * @return bool True if all required documents are uploaded
  */
-function local_conocer_cert_get_certificate($processid) {
-    global $DB;
-    
-    // Get certificate record
-    $certificate = $DB->get_record('local_conocer_certificados', ['proceso_id' => $processid]);
-    
-    return $certificate;
+function local_conocer_cert_has_all_documents($candidateid) {
+    $pendingDocs = local_conocer_cert_get_pending_documents($candidateid);
+    return empty($pendingDocs);
 }
 
 /**
- * Generate a unique certificate folio number
+ * Generate a unique folio number for a certificate
  *
- * @param int $userid User ID
- * @param int $competenciaid Competency ID
+ * @param string $prefix Prefix for the folio number (default: 'CERT')
  * @return string Unique folio number
  */
-function local_conocer_cert_generate_folio() {
+function local_conocer_cert_generate_folio($prefix = 'CERT') {
     global $DB;
     
-    // Get the next certificate ID
-    $nextid = $DB->count_records('local_conocer_certificados') + 1;
+    $year = date('Y');
+    $sequence = $DB->count_records('local_conocer_certificados') + 1;
     
-    // Generate a folio in format CERT-YYYY-NNNNN
-    $folio = 'CERT-' . date('Y') . '-' . str_pad($nextid, 5, '0', STR_PAD_LEFT);
-    
-    // Check if folio already exists (very unlikely but just in case)
-    if ($DB->record_exists('local_conocer_certificados', ['numero_folio' => $folio])) {
-        // Add a random suffix
-        $folio .= '-' . substr(uniqid(), -4);
-    }
-    
-    return $folio;
+    return $prefix . '-' . $year . '-' . str_pad($sequence, 6, '0', STR_PAD_LEFT);
 }
 
 /**
- * Generate a verification hash for a certificate
+ * Generate a unique verification hash for a certificate
  *
  * @param int $certificateid Certificate ID
- * @param string $folio Certificate folio number
+ * @param int $userid User ID
  * @return string Verification hash
  */
-function local_conocer_cert_generate_verification_hash($certificateid, $folio) {
-    // Generate a verification hash using certificate ID and folio
-    $data = $certificateid . '-' . $folio . '-' . time();
-    $hash = substr(md5($data), 0, 12);
+function local_conocer_cert_generate_verification_hash($certificateid, $userid) {
+    global $CFG;
     
-    return $hash;
+    $data = $certificateid . '|' . $userid . '|' . time();
+    $salt = isset($CFG->passwordsaltmain) ? $CFG->passwordsaltmain : '';
+    
+    return substr(md5($data . $salt), 0, 16);
 }
 
 /**
  * Create a new certificate for a completed process
  *
  * @param int $processid Process ID
- * @param int $userid User ID of the issuer
- * @param int $expiry_period Expiry period in days (0 for no expiry)
- * @return int|false Certificate ID or false on failure
+ * @param int $issuerid ID of the user issuing the certificate
+ * @param int $validityYears Number of years the certificate is valid (0 for no expiry)
+ * @return int|false ID of the new certificate or false on failure
  */
-function local_conocer_cert_create_certificate($processid, $userid, $expiry_period = 0) {
+function local_conocer_cert_create_certificate($processid, $issuerid, $validityYears = 5) {
     global $DB;
     
-    // Check if process exists and is completed successfully
-    $process = $DB->get_record('local_conocer_procesos', [
-        'id' => $processid,
-        'resultado' => 'aprobado'
-    ]);
-    
-    if (!$process) {
+    // Get process details
+    $process = $DB->get_record('local_conocer_procesos', ['id' => $processid]);
+    if (!$process || $process->resultado != 'aprobado') {
         return false;
     }
     
-    // Check if certificate already exists
-    if ($DB->record_exists('local_conocer_certificados', ['proceso_id' => $processid])) {
+    // Get candidate details
+    $candidate = $DB->get_record('local_conocer_candidatos', ['id' => $process->candidato_id]);
+    if (!$candidate) {
         return false;
     }
     
-    // Generate folio number
-    $folio = local_conocer_cert_generate_folio();
-    
-    // Prepare certificate data
-    $certificate = new \stdClass();
+    // Create certificate record
+    $certificate = new stdClass();
     $certificate->proceso_id = $processid;
-    $certificate->numero_folio = $folio;
+    $certificate->numero_folio = local_conocer_cert_generate_folio();
     $certificate->fecha_emision = time();
-    $certificate->estatus = 'activo';
-    $certificate->emitido_por = $userid;
     
-    // Set expiration date if applicable
-    if ($expiry_period > 0) {
-        $certificate->fecha_vencimiento = time() + ($expiry_period * 24 * 60 * 60);
+    // Calculate expiry date if applicable
+    if ($validityYears > 0) {
+        $certificate->fecha_vencimiento = strtotime("+{$validityYears} years", $certificate->fecha_emision);
+    } else {
+        $certificate->fecha_vencimiento = null;
     }
     
-    // Insert certificate record
+    $certificate->emitido_por = $issuerid;
+    $certificate->estatus = 'activo';
+    
+    // Insert record
     $certificateid = $DB->insert_record('local_conocer_certificados', $certificate);
     
     if ($certificateid) {
         // Generate and store verification hash
-        $hash = local_conocer_cert_generate_verification_hash($certificateid, $folio);
-        $DB->set_field('local_conocer_certificados', 'hash_verificacion', $hash, ['id' => $certificateid]);
+        $verificationHash = local_conocer_cert_generate_verification_hash($certificateid, $candidate->userid);
+        $DB->set_field('local_conocer_certificados', 'hash_verificacion', $verificationHash, ['id' => $certificateid]);
         
-        // Trigger certificate created event
-        $candidate = $DB->get_record('local_conocer_candidatos', ['id' => $process->candidato_id]);
-        $context = \context_system::instance();
-        
-        $params = [
+        // Trigger certificate creation event
+        $context = context_system::instance();
+        $event = \local_conocer_cert\event\certificate_created::create([
             'objectid' => $certificateid,
             'context' => $context,
-            'relateduserid' => $candidate->userid
-        ];
-        
-        $event = \local_conocer_cert\event\certificate_created::create($params);
+            'relateduserid' => $candidate->userid,
+            'other' => [
+                'processid' => $processid,
+                'folio' => $certificate->numero_folio
+            ]
+        ]);
         $event->trigger();
         
         // Send notification to candidate
         \local_conocer_cert\util\notification::send($candidate->userid, 'certificado_disponible', [
-            'competencia' => $DB->get_field('local_conocer_competencias', 'nombre', ['id' => $candidate->competencia_id]),
-            'nivel' => $candidate->nivel,
-            'folio' => $folio
+            'firstname' => $user->firstname,
+            'lastname' => $user->lastname,
+            'folio' => $certificate->numero_folio,
+            'fecha_emision' => userdate($certificate->fecha_emision),
+            'contexturl' => new moodle_url('/local/conocer_cert/candidate/download_certificate.php', ['id' => $certificateid]),
+            'contexturlname' => get_string('download_certificate', 'local_conocer_cert')
         ]);
     }
     
@@ -290,396 +201,461 @@ function local_conocer_cert_create_certificate($processid, $userid, $expiry_peri
 }
 
 /**
- * Verify a certificate by folio and hash
+ * Get active certificates for a user
+ *
+ * @param int $userid User ID
+ * @return array Array of active certificates
+ */
+function local_conocer_cert_get_user_certificates($userid) {
+    global $DB;
+    
+    $sql = "SELECT cert.*, p.candidato_id, c.competencia_id, c.nivel
+            FROM {local_conocer_certificados} cert
+            JOIN {local_conocer_procesos} p ON cert.proceso_id = p.id
+            JOIN {local_conocer_candidatos} c ON p.candidato_id = c.id
+            WHERE c.userid = :userid
+            ORDER BY cert.fecha_emision DESC";
+    
+    return $DB->get_records_sql($sql, ['userid' => $userid]);
+}
+
+/**
+ * Verify a certificate by its folio number and verification hash
  *
  * @param string $folio Certificate folio number
- * @param string $hash Certificate verification hash
- * @return object|false Certificate verification result or false if invalid
+ * @param string $hash Verification hash
+ * @return object|false Certificate data with additional verification info, or false if invalid
  */
 function local_conocer_cert_verify_certificate($folio, $hash = '') {
     global $DB;
     
-    // Prepare conditions
-    $conditions = ['numero_folio' => $folio];
+    // Build query conditions
+    $params = ['folio' => $folio];
+    $hashcondition = '';
     
     if (!empty($hash)) {
-        $conditions['hash_verificacion'] = $hash;
+        $params['hash'] = $hash;
+        $hashcondition = 'AND cert.hash_verificacion = :hash';
     }
     
-    // Get certificate
-    $certificate = $DB->get_record('local_conocer_certificados', $conditions);
+    $sql = "SELECT cert.*, p.candidato_id, p.resultado, p.fecha_evaluacion,
+                   c.userid, c.competencia_id, c.nivel,
+                   u.firstname, u.lastname,
+                   comp.nombre as competencia_nombre, comp.codigo as competencia_codigo
+            FROM {local_conocer_certificados} cert
+            JOIN {local_conocer_procesos} p ON cert.proceso_id = p.id
+            JOIN {local_conocer_candidatos} c ON p.candidato_id = c.id
+            JOIN {user} u ON c.userid = u.id
+            JOIN {local_conocer_competencias} comp ON c.competencia_id = comp.id
+            WHERE cert.numero_folio = :folio $hashcondition";
+    
+    $certificate = $DB->get_record_sql($sql, $params);
     
     if (!$certificate) {
         return false;
     }
     
-    // Get process and candidate data
-    $process = $DB->get_record('local_conocer_procesos', ['id' => $certificate->proceso_id]);
+    // Add verification status
+    $certificate->is_valid = ($certificate->estatus == 'activo');
+    
+    // Check if expired
+    if (!empty($certificate->fecha_vencimiento)) {
+        $certificate->is_expired = (time() > $certificate->fecha_vencimiento);
+        if ($certificate->is_expired) {
+            $certificate->is_valid = false;
+        }
+    } else {
+        $certificate->is_expired = false;
+    }
+    
+    return $certificate;
+}
+
+/**
+ * Get evaluator workload statistics
+ *
+ * @param int $evaluatorid Evaluator ID
+ * @return array Workload statistics
+ */
+function local_conocer_cert_get_evaluator_workload($evaluatorid) {
+    global $DB;
+    
+    // Get evaluator user ID
+    $evaluator = $DB->get_record('local_conocer_evaluadores', ['id' => $evaluatorid]);
+    if (!$evaluator) {
+        return [];
+    }
+    
+    $stats = [];
+    
+    // Total assigned
+    $stats['total_asignados'] = $DB->count_records('local_conocer_procesos', ['evaluador_id' => $evaluator->userid]);
+    
+    // Pending evaluations
+    $stats['pendientes'] = $DB->count_records_select(
+        'local_conocer_procesos',
+        "evaluador_id = :evaluatorid AND etapa = 'evaluacion' AND (fecha_evaluacion IS NULL OR fecha_evaluacion = 0)",
+        ['evaluatorid' => $evaluator->userid]
+    );
+    
+    // In progress
+    $stats['en_progreso'] = $DB->count_records_select(
+        'local_conocer_procesos',
+        "evaluador_id = :evaluatorid AND etapa = 'evaluacion' AND fecha_evaluacion IS NOT NULL AND fecha_fin IS NULL",
+        ['evaluatorid' => $evaluator->userid]
+    );
+    
+    // Completed
+    $stats['completados'] = $DB->count_records_select(
+        'local_conocer_procesos',
+        "evaluador_id = :evaluatorid AND etapa IN ('aprobado', 'rechazado')",
+        ['evaluatorid' => $evaluator->userid]
+    );
+    
+    // Last 7 days
+    $oneWeekAgo = time() - (7 * 24 * 60 * 60);
+    $stats['ultimos_7_dias'] = $DB->count_records_select(
+        'local_conocer_procesos',
+        "evaluador_id = :evaluatorid AND fecha_evaluacion > :timelimit",
+        ['evaluatorid' => $evaluator->userid, 'timelimit' => $oneWeekAgo]
+    );
+    
+    return $stats;
+}
+
+/**
+ * Format filesize in human readable format
+ *
+ * @param int $bytes File size in bytes
+ * @return string Formatted file size
+ */
+function local_conocer_cert_format_filesize($bytes) {
+    if ($bytes >= 1073741824) {
+        return number_format($bytes / 1073741824, 2) . ' GB';
+    } else if ($bytes >= 1048576) {
+        return number_format($bytes / 1048576, 2) . ' MB';
+    } else if ($bytes >= 1024) {
+        return number_format($bytes / 1024, 2) . ' KB';
+    } else {
+        return $bytes . ' bytes';
+    }
+}
+
+/**
+ * Get active processes for a candidate
+ *
+ * @param int $candidateid Candidate ID
+ * @return array Active certification processes
+ */
+function local_conocer_cert_get_active_processes($candidateid) {
+    global $DB;
+    
+    return $DB->get_records_select(
+        'local_conocer_procesos',
+        "candidato_id = :candidateid AND etapa IN ('solicitud', 'evaluacion', 'pendiente_revision')",
+        ['candidateid' => $candidateid],
+        'fecha_inicio DESC'
+    );
+}
+
+/**
+ * Get completed processes for a candidate
+ *
+ * @param int $candidateid Candidate ID
+ * @return array Completed certification processes
+ */
+function local_conocer_cert_get_completed_processes($candidateid) {
+    global $DB;
+    
+    return $DB->get_records_select(
+        'local_conocer_procesos',
+        "candidato_id = :candidateid AND etapa IN ('aprobado', 'rechazado')",
+        ['candidateid' => $candidateid],
+        'fecha_fin DESC'
+    );
+}
+
+/**
+ * Check if a competency is valid for certification
+ *
+ * @param int $competencyid Competency ID
+ * @param int $level Competency level
+ * @return bool True if the competency and level are valid
+ */
+function local_conocer_cert_is_valid_competency($competencyid, $level) {
+    global $DB;
+    
+    // Get competency details
+    $competency = $DB->get_record('local_conocer_competencias', ['id' => $competencyid, 'activo' => 1]);
+    if (!$competency) {
+        return false;
+    }
+    
+    // Check if level is available for this competency
+    $availableLevels = explode(',', $competency->niveles_disponibles);
+    return in_array($level, $availableLevels);
+}
+
+/**
+ * Create a new certification process for a candidate
+ *
+ * @param int $candidateid Candidate ID
+ * @param string $etapa Initial stage (default: 'solicitud')
+ * @return int|false Process ID or false on failure
+ */
+function local_conocer_cert_create_process($candidateid, $etapa = 'solicitud') {
+    global $DB;
+    
+    // Verify candidate exists
+    if (!$DB->record_exists('local_conocer_candidatos', ['id' => $candidateid])) {
+        return false;
+    }
+    
+    // Create process record
+    $process = new stdClass();
+    $process->candidato_id = $candidateid;
+    $process->etapa = $etapa;
+    $process->fecha_inicio = time();
+    $process->timemodified = time();
+    
+    return $DB->insert_record('local_conocer_procesos', $process);
+}
+
+/**
+ * Get assigned candidates for an evaluator
+ *
+ * @param int $evaluatoruserid Evaluator user ID
+ * @param string $filter Filter by status ('pendientes', 'completados', or 'all')
+ * @return array Candidate information records
+ */
+function local_conocer_cert_get_assigned_candidates($evaluatoruserid, $filter = 'all') {
+    global $DB;
+    
+    $conditions = [];
+    $params = ['evaluatorid' => $evaluatoruserid];
+    
+    $baseCondition = "p.evaluador_id = :evaluatorid";
+    $conditions[] = $baseCondition;
+    
+    if ($filter == 'pendientes') {
+        $conditions[] = "p.etapa = 'evaluacion'";
+    } else if ($filter == 'completados') {
+        $conditions[] = "p.etapa IN ('aprobado', 'rechazado')";
+    }
+    
+    $where = implode(' AND ', $conditions);
+    
+    $sql = "SELECT p.id, p.candidato_id, p.etapa, p.resultado, p.fecha_inicio, p.fecha_evaluacion, p.fecha_fin,
+                   c.userid, c.competencia_id, c.nivel,
+                   u.firstname, u.lastname, u.email,
+                   comp.nombre as competencia_nombre, comp.codigo as competencia_codigo
+            FROM {local_conocer_procesos} p
+            JOIN {local_conocer_candidatos} c ON p.candidato_id = c.id
+            JOIN {user} u ON c.userid = u.id
+            JOIN {local_conocer_competencias} comp ON c.competencia_id = comp.id
+            WHERE $where
+            ORDER BY p.fecha_inicio DESC";
+    
+    return $DB->get_records_sql($sql, $params);
+}
+
+/**
+ * Assign an evaluator to a candidate's process
+ *
+ * @param int $processid Process ID
+ * @param int $evaluatoruserid Evaluator user ID
+ * @return bool Success status
+ */
+function local_conocer_cert_assign_evaluator($processid, $evaluatoruserid) {
+    global $DB;
+    
+    // Verify process exists and is in a valid stage
+    $process = $DB->get_record_select(
+        'local_conocer_procesos', 
+        "id = :processid AND etapa IN ('solicitud', 'evaluacion')",
+        ['processid' => $processid]
+    );
     
     if (!$process) {
         return false;
     }
     
-    $candidate = $DB->get_record('local_conocer_candidatos', ['id' => $process->candidato_id]);
+    // Verify evaluator exists and is active
+    $evaluator = $DB->get_record_select(
+        'local_conocer_evaluadores',
+        "userid = :userid AND estatus = 'activo'",
+        ['userid' => $evaluatoruserid]
+    );
     
-    if (!$candidate) {
+    if (!$evaluator) {
         return false;
     }
     
-    $user = $DB->get_record('user', ['id' => $candidate->userid]);
-    $competencia = $DB->get_record('local_conocer_competencias', ['id' => $candidate->competencia_id]);
+    // Update process with evaluator and change stage to evaluation
+    $process->evaluador_id = $evaluatoruserid;
+    $process->etapa = 'evaluacion';
+    $process->timemodified = time();
     
-    // Prepare verification result
-    $result = new \stdClass();
-    $result->valid = ($certificate->estatus === 'activo');
-    $result->folio = $certificate->numero_folio;
-    $result->issue_date = $certificate->fecha_emision;
-    $result->holder_name = fullname($user);
-    $result->competency = $competencia ? $competencia->nombre : '';
-    $result->competency_code = $competencia ? $competencia->codigo : '';
-    $result->level = $candidate->nivel;
+    $result = $DB->update_record('local_conocer_procesos', $process);
     
-    // Check expiration
-    if (!empty($certificate->fecha_vencimiento)) {
-        $result->expiry_date = $certificate->fecha_vencimiento;
-        $result->expired = (time() > $certificate->fecha_vencimiento);
+    if ($result) {
+        // Get candidate details
+        $candidate = $DB->get_record('local_conocer_candidatos', ['id' => $process->candidato_id]);
         
-        if ($result->expired) {
-            $result->valid = false;
-            $result->status_message = get_string('certificate_expired', 'local_conocer_cert');
-        }
-    }
-    
-    if ($certificate->estatus !== 'activo') {
-        $result->status_message = get_string('certificate_inactive', 'local_conocer_cert');
-    } else if ($result->valid) {
-        $result->status_message = get_string('certificate_valid', 'local_conocer_cert');
+        // Notify evaluator
+        $evaluatoruser = $DB->get_record('user', ['id' => $evaluatoruserid]);
+        $candidateuser = $DB->get_record('user', ['id' => $candidate->userid]);
+        $competencia = $DB->get_record('local_conocer_competencias', ['id' => $candidate->competencia_id]);
+        
+        \local_conocer_cert\util\notification::send($evaluatoruserid, 'evaluador_nueva_asignacion', [
+            'firstname' => $evaluatoruser->firstname,
+            'lastname' => $evaluatoruser->lastname,
+            'candidate_name' => fullname($candidateuser),
+            'competencia' => $competencia->nombre,
+            'nivel' => $candidate->nivel,
+            'proceso_id' => $process->id,
+            'contexturl' => new moodle_url('/local/conocer_cert/evaluator/evaluate.php', ['id' => $process->candidato_id]),
+            'contexturlname' => get_string('evaluate_candidate', 'local_conocer_cert')
+        ]);
+        
+        // Notify candidate
+        \local_conocer_cert\util\notification::send($candidate->userid, 'evaluador_asignado', [
+            'firstname' => $candidateuser->firstname,
+            'lastname' => $candidateuser->lastname,
+            'evaluador_nombre' => fullname($evaluatoruser),
+            'competencia' => $competencia->nombre,
+            'nivel' => $candidate->nivel,
+            'contexturl' => new moodle_url('/local/conocer_cert/candidate/view_process.php', ['id' => $process->id]),
+            'contexturlname' => get_string('view_process', 'local_conocer_cert')
+        ]);
     }
     
     return $result;
 }
 
 /**
- * Get available evaluators for a competency
+ * Get the status of a candidate's documents
  *
- * @param int $competenciaid Competency ID
- * @return array Array of available evaluators
+ * @param int $candidateid Candidate ID
+ * @return array Document status information
  */
-function local_conocer_cert_get_available_evaluators($competenciaid) {
+function local_conocer_cert_get_document_status($candidateid) {
     global $DB;
     
-    // SQL to find evaluators with the specified competency
+    // Get the list of uploaded documents
+    $documents = $DB->get_records('local_conocer_documentos', ['candidato_id' => $candidateid]);
+    
+    // Get pending documents
+    $pendingDocs = local_conocer_cert_get_pending_documents($candidateid);
+    
+    // Count by status
+    $counts = [
+        'total' => count($documents),
+        'pendientes' => count($pendingDocs),
+        'aprobados' => 0,
+        'rechazados' => 0,
+        'en_revision' => 0
+    ];
+    
+    foreach ($documents as $doc) {
+        if ($doc->estado == 'aprobado') {
+            $counts['aprobados']++;
+        } else if ($doc->estado == 'rechazado') {
+            $counts['rechazados']++;
+        } else {
+            $counts['en_revision']++;
+        }
+    }
+    
+    return [
+        'documents' => $documents,
+        'pending' => $pendingDocs,
+        'counts' => $counts,
+        'all_uploaded' => empty($pendingDocs),
+        'all_approved' => ($counts['aprobados'] == $counts['total'] && $counts['total'] > 0)
+    ];
+}
+
+/**
+ * Complete a certification process with results
+ *
+ * @param int $processid Process ID
+ * @param string $resultado Result (aprobado/rechazado)
+ * @param array $additionalData Additional data to include
+ * @return bool Success status
+ */
+function local_conocer_cert_complete_process($processid, $resultado, $additionalData = []) {
+    global $DB, $USER;
+    
+    // Verify process exists and is in evaluation stage
+    $process = $DB->get_record_select(
+        'local_conocer_procesos', 
+        "id = :processid AND etapa = 'evaluacion'",
+        ['processid' => $processid]
+    );
+    
+    if (!$process) {
+        return false;
+    }
+    
+    // Update process with result and complete
+    $process->resultado = $resultado;
+    $process->etapa = $resultado; // 'aprobado' or 'rechazado'
+    $process->fecha_fin = time();
+    $process->timemodified = time();
+    
+    // Add additional data if provided
+    foreach ($additionalData as $key => $value) {
+        if (property_exists($process, $key)) {
+            $process->$key = $value;
+        }
+    }
+    
+    $result = $DB->update_record('local_conocer_procesos', $process);
+    
+    if ($result) {
+        // Get candidate details
+        $candidate = $DB->get_record('local_conocer_candidatos', ['id' => $process->candidato_id]);
+        $candidateuser = $DB->get_record('user', ['id' => $candidate->userid]);
+        $competencia = $DB->get_record('local_conocer_competencias', ['id' => $candidate->competencia_id]);
+        
+        // Create certificate if approved
+        if ($resultado == 'aprobado') {
+            local_conocer_cert_create_certificate($processid, $USER->id);
+        }
+        
+        // Notify candidate of completion
+        \local_conocer_cert\util\notification::notify_certification_completed($processid);
+        
+        // Trigger certification completion event
+        $context = context_system::instance();
+        $event = \local_conocer_cert\event\certification_completed::create_from_process($process, $context, $candidate->userid);
+        $event->trigger();
+    }
+    
+    return $result;
+}
+
+/**
+ * Get evaluators that can be assigned to a specific competency
+ *
+ * @param int $competencyid Competency ID
+ * @return array Array of eligible evaluators
+ */
+function local_conocer_cert_get_eligible_evaluators($competencyid) {
+    global $DB;
+    
     $sql = "SELECT e.*, u.firstname, u.lastname, u.email
             FROM {local_conocer_evaluadores} e
             JOIN {user} u ON e.userid = u.id
             WHERE e.estatus = 'activo'
-              AND (e.competencias LIKE ? OR e.competencias LIKE ? OR e.competencias LIKE ?)";
+            AND (e.competencias LIKE :comp1 OR e.competencias LIKE :comp2 OR e.competencias LIKE :comp3)";
     
     $params = [
-        '%"' . $competenciaid . '"%',
-        '%[' . $competenciaid . ',%',
-        '%,' . $competenciaid . ',%'
+        'comp1' => '%"' . $competencyid . '"%',
+        'comp2' => '%[' . $competencyid . ',%',
+        'comp3' => '%,' . $competencyid . ',%'
     ];
     
-    $evaluators = $DB->get_records_sql($sql, $params);
-    
-    // Filter evaluators by workload (limit to those who haven't reached their maximum)
-    foreach ($evaluators as $key => $evaluator) {
-        // Count current assignments
-        $current_assignments = $DB->count_records('local_conocer_procesos', [
-            'evaluador_id' => $evaluator->userid,
-            'etapa' => 'evaluacion'
-        ]);
-        
-        // Check if maximum exceeded
-        if (!empty($evaluator->max_candidatos) && $current_assignments >= $evaluator->max_candidatos) {
-            unset($evaluators[$key]);
-        }
-    }
-    
-    return $evaluators;
-}
-
-/**
- * Assign an evaluator to a candidate
- *
- * @param int $candidateid Candidate ID
- * @param int $evaluatorid Evaluator ID
- * @param string $comments Assignment comments
- * @return bool Success status
- */
-function local_conocer_cert_assign_evaluator($candidateid, $evaluatorid, $comments = '') {
-    return \local_conocer_cert\evaluator\manager::assign_evaluator_to_candidate(
-        $candidateid, $evaluatorid, $comments
-    );
-}
-
-/**
- * Submit an evaluation for a candidate
- *
- * @param int $processid Process ID
- * @param object $data Evaluation data
- * @return bool Success status
- */
-function local_conocer_cert_submit_evaluation($processid, $data) {
-    return \local_conocer_cert\evaluator\manager::submit_evaluation($processid, $data);
-}
-
-/**
- * Register a new certification candidate
- *
- * @param object $data Candidate data
- * @return int|false Candidate ID or false on failure
- */
-function local_conocer_cert_register_candidate($data) {
-    global $DB, $USER;
-    
-    // Extract competency ID and validate it exists
-    $competencia_id = $data->competencia_id;
-    $competencia = $DB->get_record('local_conocer_competencias', [
-        'id' => $competencia_id,
-        'activo' => 1
-    ]);
-    
-    if (!$competencia) {
-        return false;
-    }
-    
-    // Check if the same competency/level combination already exists for this user
-    $exists = $DB->record_exists('local_conocer_candidatos', [
-        'userid' => $USER->id,
-        'competencia_id' => $competencia_id,
-        'nivel' => $data->nivel
-    ]);
-    
-    if ($exists) {
-        return false;
-    }
-    
-    // Prepare candidate data
-    $candidate = new \stdClass();
-    $candidate->userid = $USER->id;
-    $candidate->competencia_id = $competencia_id;
-    $candidate->nivel = $data->nivel;
-    $candidate->estado = 'pendiente';
-    $candidate->curp = isset($data->curp) ? $data->curp : '';
-    $candidate->telefono = isset($data->telefono) ? $data->telefono : '';
-    $candidate->direccion = isset($data->direccion) ? $data->direccion : '';
-    $candidate->experiencia = isset($data->experiencia) ? $data->experiencia : '';
-    $candidate->fecha_solicitud = time();
-    $candidate->fecha_modificacion = time();
-    
-    // Insert candidate record
-    $candidateid = $DB->insert_record('local_conocer_candidatos', $candidate);
-    
-    if ($candidateid) {
-        // Create initial process record
-        $process = new \stdClass();
-        $process->candidato_id = $candidateid;
-        $process->etapa = 'solicitud';
-        $process->fecha_inicio = time();
-        $process->timemodified = time();
-        
-        $processid = $DB->insert_record('local_conocer_procesos', $process);
-        
-        // Trigger candidate created event
-        $context = \context_system::instance();
-        $candidate->id = $candidateid;
-        
-        $event = \local_conocer_cert\event\candidate_created::create_from_candidate($candidate, $context);
-        $event->trigger();
-        
-        // Send notification
-        \local_conocer_cert\util\notification::send($USER->id, 'candidato_registrado', [
-            'competencia' => $competencia->nombre,
-            'nivel' => $data->nivel
-        ]);
-    }
-    
-    return $candidateid;
-}
-
-/**
- * Register a new company
- *
- * @param object $data Company data
- * @return int|false Company ID or false on failure
- */
-function local_conocer_cert_register_company($data) {
-    global $DB, $USER;
-    
-    // Check if RFC already exists
-    $exists = $DB->record_exists('local_conocer_empresas', ['rfc' => $data->rfc]);
-    
-    if ($exists) {
-        return false;
-    }
-    
-    // Prepare company data
-    $company = new \stdClass();
-    $company->nombre = $data->nombre;
-    $company->rfc = $data->rfc;
-    $company->direccion = $data->direccion;
-    $company->sector = $data->sector;
-    $company->contacto_nombre = $data->contacto_nombre;
-    $company->contacto_email = $data->contacto_email;
-    $company->contacto_telefono = $data->contacto_telefono;
-    $company->contacto_puesto = $data->contacto_puesto;
-    $company->contacto_userid = $USER->id;
-    $company->estado = 'pendiente';
-    $company->justificacion = $data->justificacion;
-    $company->fecha_solicitud = time();
-    $company->fecha_modificacion = time();
-    
-    // Process competencias as JSON
-    if (!empty($data->competencias) && is_array($data->competencias)) {
-        $company->competencias = json_encode($data->competencias);
-    } else {
-        $company->competencias = '[]';
-    }
-    
-    // Insert company record
-    $companyid = $DB->insert_record('local_conocer_empresas', $company);
-    
-    if ($companyid) {
-        // Trigger company registered event
-        $context = \context_system::instance();
-        $company->id = $companyid;
-        
-        $event = \local_conocer_cert\event\company_registered::create_from_company($company, $context);
-        $event->trigger();
-        
-        // Send notification
-        \local_conocer_cert\util\notification::send($USER->id, 'empresa_registrada', [
-            'nombre' => $company->nombre
-        ]);
-    }
-    
-    return $companyid;
-}
-
-/**
- * Get certification statistics
- *
- * @param array $filters Optional filters
- * @return object Statistics object
- */
-function local_conocer_cert_get_statistics($filters = []) {
-    global $DB;
-    
-    $stats = new \stdClass();
-    
-    // Build WHERE clause based on filters
-    $where = '';
-    $params = [];
-    
-    if (!empty($filters['competencia_id'])) {
-        $where = 'WHERE c.competencia_id = :competencia_id';
-        $params['competencia_id'] = $filters['competencia_id'];
-    }
-    
-    if (!empty($filters['fecha_inicio']) && !empty($filters['fecha_fin'])) {
-        $where = $where ? $where . ' AND ' : 'WHERE ';
-        $where .= 'c.fecha_solicitud BETWEEN :fecha_inicio AND :fecha_fin';
-        $params['fecha_inicio'] = $filters['fecha_inicio'];
-        $params['fecha_fin'] = $filters['fecha_fin'];
-    }
-    
-    // Total candidates
-    $sql = "SELECT COUNT(*) FROM {local_conocer_candidatos} c $where";
-    $stats->total_candidates = $DB->count_records_sql($sql, $params);
-    
-    // Approved certifications
-    $sql = "SELECT COUNT(*) 
-            FROM {local_conocer_candidatos} c
-            JOIN {local_conocer_procesos} p ON c.id = p.candidato_id
-            $where
-            AND p.resultado = 'aprobado'";
-    $stats->approved = $DB->count_records_sql($sql, $params);
-    
-    // Rejected certifications
-    $sql = "SELECT COUNT(*) 
-            FROM {local_conocer_candidatos} c
-            JOIN {local_conocer_procesos} p ON c.id = p.candidato_id
-            $where
-            AND p.resultado = 'rechazado'";
-    $stats->rejected = $DB->count_records_sql($sql, $params);
-    
-    // In progress
-    $sql = "SELECT COUNT(*) 
-            FROM {local_conocer_candidatos} c
-            JOIN {local_conocer_procesos} p ON c.id = p.candidato_id
-            $where
-            AND p.etapa IN ('solicitud', 'evaluacion', 'pendiente_revision')";
-    $stats->in_progress = $DB->count_records_sql($sql, $params);
-    
-    // Calculate approval rate
-    $total_completed = $stats->approved + $stats->rejected;
-    $stats->approval_rate = $total_completed > 0 ? round(($stats->approved / $total_completed) * 100, 2) : 0;
-    
-    // Average completion time (in days)
-    $sql = "SELECT AVG(p.fecha_fin - p.fecha_inicio) / 86400 as avg_days
-            FROM {local_conocer_candidatos} c
-            JOIN {local_conocer_procesos} p ON c.id = p.candidato_id
-            $where
-            AND p.fecha_fin IS NOT NULL";
-    $avg_days = $DB->get_field_sql($sql, $params);
-    $stats->avg_completion_days = round($avg_days, 1);
-    
-    return $stats;
-}
-
-/**
- * Send scheduled notifications
- * 
- * This function is called by scheduled tasks to send reminders and notifications
- *
- * @return bool Success status
- */
-function local_conocer_cert_send_scheduled_notifications() {
-    return \local_conocer_cert\util\notification::send_scheduled_notifications();
-}
-
-/**
- * Process certificate expirations
- * 
- * This function is called by scheduled tasks to mark expired certificates
- *
- * @return bool Success status
- */
-function local_conocer_cert_process_certificate_expirations() {
-    global $DB;
-    
-    $now = time();
-    $certificates = $DB->get_records_select('local_conocer_certificados', 
-        "fecha_vencimiento < :now AND estatus = 'activo'", 
-        ['now' => $now]
-    );
-    
-    foreach ($certificates as $cert) {
-        // Update certificate status
-        $DB->set_field('local_conocer_certificados', 'estatus', 'vencido', ['id' => $cert->id]);
-        
-        // Get process and candidate info
-        $process = $DB->get_record('local_conocer_procesos', ['id' => $cert->proceso_id]);
-        
-        if ($process) {
-            $candidate = $DB->get_record('local_conocer_candidatos', ['id' => $process->candidato_id]);
-            
-            if ($candidate) {
-                // Trigger certificate expired event
-                $context = \context_system::instance();
-                $event = \local_conocer_cert\event\certificate_expired::create_from_certificate($cert, $context, $candidate->userid);
-                $event->trigger();
-                
-                // Send notification to certificate holder
-                \local_conocer_cert\util\notification::send($candidate->userid, 'certificado_vencido', [
-                    'folio' => $cert->numero_folio,
-                    'fecha_vencimiento' => userdate($cert->fecha_vencimiento)
-                ]);
-            }
-        }
-    }
-    
-    return true;
+    return $DB->get_records_sql($sql, $params);
 }

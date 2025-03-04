@@ -17,350 +17,295 @@
 /**
  * Library of functions for local_conocer_cert
  *
- * @package   local_conocer_cert
- * @copyright 2025 Sebastian Gonzalez Zepeda sgonzalez@infraestructuragis.com
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package    local_conocer_cert
+ * @copyright  2025 Sebastian Gonzalez Zepeda sgonzalez@infraestructuragis.com
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Adds navigation nodes to the admin tree.
+ * Checks if a user is a candidate in the CONOCER certification system
  *
- * @param navigation_node $navigation The navigation node to extend
- * @param context $context The context of the course
- * @return void
+ * @param int $userid User ID to check (defaults to current user)
+ * @return bool True if the user is a candidate
+ */
+function local_conocer_cert_is_candidate($userid = null) {
+    global $USER, $DB;
+    
+    if ($userid === null) {
+        $userid = $USER->id;
+    }
+    
+    // Check if the user has any candidate records
+    return $DB->record_exists('local_conocer_candidatos', ['userid' => $userid]);
+}
+
+/**
+ * Checks if a user is an evaluator in the CONOCER certification system
+ *
+ * @param int $userid User ID to check (defaults to current user)
+ * @return bool True if the user is an evaluator
+ */
+function local_conocer_cert_is_evaluator($userid = null) {
+    global $USER, $DB;
+    
+    if ($userid === null) {
+        $userid = $USER->id;
+    }
+    
+    // Check if the user is an active evaluator
+    return $DB->record_exists('local_conocer_evaluadores', ['userid' => $userid, 'estatus' => 'activo']);
+}
+
+/**
+ * Checks if a user is a company contact in the CONOCER certification system
+ *
+ * @param int $userid User ID to check (defaults to current user)
+ * @return bool True if the user is a company contact
+ */
+function local_conocer_cert_is_company_contact($userid = null) {
+    global $USER, $DB;
+    
+    if ($userid === null) {
+        $userid = $USER->id;
+    }
+    
+    // Check if the user is a contact for any company
+    return $DB->record_exists('local_conocer_empresas', ['contacto_userid' => $userid]);
+}
+
+/**
+ * Get a user's candidate record in the CONOCER certification system
+ *
+ * @param int $userid User ID (defaults to current user)
+ * @return object|false The candidate record or false if not found
+ */
+function local_conocer_cert_get_candidate($userid = null) {
+    global $USER, $DB;
+    
+    if ($userid === null) {
+        $userid = $USER->id;
+    }
+    
+    // Get the most recent candidate record for this user
+    return $DB->get_record('local_conocer_candidatos', ['userid' => $userid], '*', IGNORE_MULTIPLE);
+}
+
+/**
+ * Get a user's evaluator record in the CONOCER certification system
+ *
+ * @param int $userid User ID (defaults to current user)
+ * @return object|false The evaluator record or false if not found
+ */
+function local_conocer_cert_get_evaluator($userid = null) {
+    global $USER, $DB;
+    
+    if ($userid === null) {
+        $userid = $USER->id;
+    }
+    
+    return $DB->get_record('local_conocer_evaluadores', ['userid' => $userid]);
+}
+
+/**
+ * Get a user's company record in the CONOCER certification system
+ *
+ * @param int $userid User ID (defaults to current user)
+ * @return object|false The company record where the user is the contact, or false if not found
+ */
+function local_conocer_cert_get_company($userid = null) {
+    global $USER, $DB;
+    
+    if ($userid === null) {
+        $userid = $USER->id;
+    }
+    
+    return $DB->get_record('local_conocer_empresas', ['contacto_userid' => $userid]);
+}
+
+/**
+ * Extend Moodle navigation
+ *
+ * @param global_navigation $navigation Navigation object
  */
 function local_conocer_cert_extend_navigation(global_navigation $navigation) {
-    global $USER, $DB, $CFG;
+    global $CFG, $USER;
     
-    // Get the current context and check capabilities
-    $context = context_system::instance();
-    
-    // Get plugin configuration for URLs
-    $baseurl = new moodle_url('/local/conocer_cert');
-    
-    // Add main node for the plugin
-    $main = $navigation->add(
-        get_string('pluginname', 'local_conocer_cert'),
-        $baseurl,
-        navigation_node::TYPE_CONTAINER
-    );
-    
-    // Check if user is a candidate (has at least one certification request)
-    $iscandidato = $DB->record_exists('local_conocer_candidatos', ['userid' => $USER->id]);
-    
-    // Check if user is an evaluator
-    $isevaluator = $DB->record_exists('local_conocer_evaluadores', ['userid' => $USER->id, 'estatus' => 'activo']);
-    
-    // Check if user is a company contact
-    $iscompany = $DB->record_exists('local_conocer_empresas', ['contacto_userid' => $USER->id]);
-    
-    // Check admin capabilities
-    $isadmin = has_capability('local/conocer_cert:managecandidates', $context);
-    
-    // Add candidate nodes
-    if ($iscandidato || has_capability('local/conocer_cert:requestcertification', $context)) {
-        $candidateurl = new moodle_url('/local/conocer_cert/pages/dashboard.php', ['type' => 'candidate']);
-        $candidate = $main->add(
-            get_string('candidate_dashboard', 'local_conocer_cert'),
-            $candidateurl
+    // Add the main CONOCER navigation node
+    if (isloggedin() && !isguestuser()) {
+        $conocernode = $navigation->add(
+            get_string('pluginname', 'local_conocer_cert'),
+            new moodle_url('/local/conocer_cert/index.php'),
+            navigation_node::TYPE_CUSTOM,
+            null,
+            'conocercert',
+            new pix_icon('icon', get_string('pluginname', 'local_conocer_cert'), 'local_conocer_cert')
         );
         
-        // Add child nodes for candidate
-        $candidate->add(
-            get_string('request_certification', 'local_conocer_cert'),
-            new moodle_url('/local/conocer_cert/pages/mycertifications.php', ['action' => 'new'])
-        );
+        // Based on user role add specific navigation nodes
+        if (local_conocer_cert_is_candidate()) {
+            $conocernode->add(
+                get_string('candidate_dashboard', 'local_conocer_cert'),
+                new moodle_url('/local/conocer_cert/candidate/dashboard.php'),
+                navigation_node::TYPE_CUSTOM
+            );
+            
+            $conocernode->add(
+                get_string('new_request', 'local_conocer_cert'),
+                new moodle_url('/local/conocer_cert/candidate/new_request.php'),
+                navigation_node::TYPE_CUSTOM
+            );
+            
+            $conocernode->add(
+                get_string('my_certifications', 'local_conocer_cert'),
+                new moodle_url('/local/conocer_cert/candidate/my_certifications.php'),
+                navigation_node::TYPE_CUSTOM
+            );
+        }
         
-        $candidate->add(
-            get_string('mycertifications', 'local_conocer_cert'),
-            new moodle_url('/local/conocer_cert/pages/mycertifications.php')
-        );
+        if (local_conocer_cert_is_evaluator()) {
+            $conocernode->add(
+                get_string('evaluator_dashboard', 'local_conocer_cert'),
+                new moodle_url('/local/conocer_cert/evaluator/dashboard.php'),
+                navigation_node::TYPE_CUSTOM
+            );
+            
+            $conocernode->add(
+                get_string('pending_evaluations', 'local_conocer_cert'),
+                new moodle_url('/local/conocer_cert/evaluator/pending.php'),
+                navigation_node::TYPE_CUSTOM
+            );
+        }
         
-        // Only show document management if already a candidate
-        if ($iscandidato) {
-            $candidate->add(
-                get_string('my_documents', 'local_conocer_cert'),
-                new moodle_url('/local/conocer_cert/pages/mycertifications.php', ['action' => 'documents'])
+        if (local_conocer_cert_is_company_contact()) {
+            $conocernode->add(
+                get_string('company_dashboard', 'local_conocer_cert'),
+                new moodle_url('/local/conocer_cert/company/dashboard.php'),
+                navigation_node::TYPE_CUSTOM
+            );
+        }
+        
+        // Add admin links if user has appropriate capabilities
+        if (has_capability('local/conocer_cert:managecandidates', context_system::instance())) {
+            $adminnode = $conocernode->add(
+                get_string('administration', 'local_conocer_cert'),
+                new moodle_url('/local/conocer_cert/admin/index.php'),
+                navigation_node::TYPE_CUSTOM
+            );
+            
+            $adminnode->add(
+                get_string('candidates', 'local_conocer_cert'),
+                new moodle_url('/local/conocer_cert/admin/candidates.php'),
+                navigation_node::TYPE_CUSTOM
+            );
+            
+            $adminnode->add(
+                get_string('companies', 'local_conocer_cert'),
+                new moodle_url('/local/conocer_cert/admin/companies.php'),
+                navigation_node::TYPE_CUSTOM
+            );
+            
+            $adminnode->add(
+                get_string('evaluators', 'local_conocer_cert'),
+                new moodle_url('/local/conocer_cert/admin/evaluators.php'),
+                navigation_node::TYPE_CUSTOM
+            );
+            
+            $adminnode->add(
+                get_string('competencies', 'local_conocer_cert'),
+                new moodle_url('/local/conocer_cert/admin/competencies.php'),
+                navigation_node::TYPE_CUSTOM
+            );
+            
+            $adminnode->add(
+                get_string('reports', 'local_conocer_cert'),
+                new moodle_url('/local/conocer_cert/admin/reports.php'),
+                navigation_node::TYPE_CUSTOM
             );
         }
     }
-    
-    // Add evaluator nodes
-    if ($isevaluator) {
-        $evaluatorurl = new moodle_url('/local/conocer_cert/pages/dashboard.php', ['type' => 'evaluator']);
-        $evaluator = $main->add(
-            get_string('evaluator_dashboard', 'local_conocer_cert'),
-            $evaluatorurl
-        );
-        
-        $evaluator->add(
-            get_string('assigned_candidates', 'local_conocer_cert'),
-            new moodle_url('/local/conocer_cert/pages/evaluators.php', ['action' => 'assigned'])
-        );
-        
-        $evaluator->add(
-            get_string('completed_evaluations', 'local_conocer_cert'),
-            new moodle_url('/local/conocer_cert/pages/evaluators.php', ['action' => 'completed'])
-        );
-        
-        $evaluator->add(
-            get_string('evaluator_profile', 'local_conocer_cert'),
-            new moodle_url('/local/conocer_cert/pages/evaluators.php', ['action' => 'profile'])
-        );
-    }
-    
-    // Add company nodes
-    if ($iscompany) {
-        $companyurl = new moodle_url('/local/conocer_cert/pages/dashboard.php', ['type' => 'company']);
-        $company = $main->add(
-            get_string('company_dashboard', 'local_conocer_cert'),
-            $companyurl
-        );
-        
-        $company->add(
-            get_string('company_profile', 'local_conocer_cert'),
-            new moodle_url('/local/conocer_cert/pages/companies.php', ['action' => 'profile'])
-        );
-        
-        $company->add(
-            get_string('company_competencies', 'local_conocer_cert'),
-            new moodle_url('/local/conocer_cert/pages/companies.php', ['action' => 'competencies'])
-        );
-        
-        $company->add(
-            get_string('company_candidates', 'local_conocer_cert'),
-            new moodle_url('/local/conocer_cert/pages/companies.php', ['action' => 'candidates'])
-        );
-    }
-    
-    // Add admin nodes
-    if ($isadmin) {
-        $adminurl = new moodle_url('/local/conocer_cert/pages/dashboard.php', ['type' => 'admin']);
-        $admin = $main->add(
-            get_string('admin_dashboard', 'local_conocer_cert'),
-            $adminurl
-        );
-        
-        $admin->add(
-            get_string('admin_candidates', 'local_conocer_cert'),
-            new moodle_url('/local/conocer_cert/pages/candidates.php')
-        );
-        
-        $admin->add(
-            get_string('admin_companies', 'local_conocer_cert'),
-            new moodle_url('/local/conocer_cert/pages/companies.php')
-        );
-        
-        $admin->add(
-            get_string('admin_evaluators', 'local_conocer_cert'),
-            new moodle_url('/local/conocer_cert/pages/evaluators.php')
-        );
-        
-        $admin->add(
-            get_string('admin_competencies', 'local_conocer_cert'),
-            new moodle_url('/local/conocer_cert/pages/competencies.php')
-        );
-        
-        $admin->add(
-            get_string('admin_reports', 'local_conocer_cert'),
-            new moodle_url('/local/conocer_cert/pages/reports.php')
-        );
-    }
 }
 
 /**
- * Adds options to the user profile menu
+ * Add items to the user menu.
  *
- * @param \core_user\output\myprofile\tree $tree The navigation tree to extend
+ * @param navigation_node $navigation The navigation node to extend
  * @param stdClass $user The user object
- * @param boolean $iscurrentuser Is the user viewing their own profile
- * @param stdClass $course The current course
- * @return void
+ * @param context_user $context The context of the user
+ * @param stdClass $course The course to object for the tool
+ * @param context_course $coursecontext The context of the course
  */
-function local_conocer_cert_myprofile_navigation(core_user\output\myprofile\tree $tree, $user, $iscurrentuser, $course) {
-    global $DB, $USER;
+function local_conocer_cert_extend_navigation_user($navigation, $user, $context, $course, $coursecontext) {
+    global $USER;
     
-    if (!$iscurrentuser && !has_capability('local/conocer_cert:managecandidates', context_system::instance())) {
-        return;
-    }
-    
-    // Check if user is a candidate
-    $iscandidato = $DB->record_exists('local_conocer_candidatos', ['userid' => $user->id]);
-    
-    // Check if user is an evaluator
-    $isevaluator = $DB->record_exists('local_conocer_evaluadores', ['userid' => $user->id, 'estatus' => 'activo']);
-    
-    // Check if user is a company contact
-    $iscompany = $DB->record_exists('local_conocer_empresas', ['contacto_userid' => $user->id]);
-    
-    // Create node category
-    $category = new core_user\output\myprofile\category('conocer_cert', 
-        get_string('pluginname', 'local_conocer_cert'), 'contact');
-    $tree->add_category($category);
-    
-    // Add node for certifications
-    if ($iscandidato) {
-        $url = new moodle_url('/local/conocer_cert/pages/mycertifications.php', ['userid' => $user->id]);
-        $node = new core_user\output\myprofile\node('conocer_cert', 'certifications',
-            get_string('mycertifications', 'local_conocer_cert'), null, $url);
-        $tree->add_node($node);
-    }
-    
-    // Add node for evaluator profile
-    if ($isevaluator) {
-        $url = new moodle_url('/local/conocer_cert/pages/evaluators.php', 
-            ['action' => 'profile', 'userid' => $user->id]);
-        $node = new core_user\output\myprofile\node('conocer_cert', 'evaluator', 
-            get_string('evaluator_profile', 'local_conocer_cert'), null, $url);
-        $tree->add_node($node);
-    }
-    
-    // Add node for company profile
-    if ($iscompany) {
-        $url = new moodle_url('/local/conocer_cert/pages/companies.php', 
-            ['action' => 'profile', 'userid' => $user->id]);
-        $node = new core_user\output\myprofile\node('conocer_cert', 'company', 
-            get_string('company_profile', 'local_conocer_cert'), null, $url);
-        $tree->add_node($node);
+    if ($user->id == $USER->id) {
+        // Only add links for the current user
+        
+        // Add candidate dashboard if user is a candidate
+        if (local_conocer_cert_is_candidate()) {
+            $url = new moodle_url('/local/conocer_cert/candidate/dashboard.php');
+            $navigation->add(
+                get_string('candidate_dashboard', 'local_conocer_cert'),
+                $url,
+                navigation_node::TYPE_SETTING
+            );
+        }
+        
+        // Add evaluator dashboard if user is an evaluator
+        if (local_conocer_cert_is_evaluator()) {
+            $url = new moodle_url('/local/conocer_cert/evaluator/dashboard.php');
+            $navigation->add(
+                get_string('evaluator_dashboard', 'local_conocer_cert'),
+                $url,
+                navigation_node::TYPE_SETTING
+            );
+        }
+        
+        // Add company dashboard if user is a company contact
+        if (local_conocer_cert_is_company_contact()) {
+            $url = new moodle_url('/local/conocer_cert/company/dashboard.php');
+            $navigation->add(
+                get_string('company_dashboard', 'local_conocer_cert'),
+                $url,
+                navigation_node::TYPE_SETTING
+            );
+        }
     }
 }
 
 /**
- * Serves the plugin files.
- *
- * @param stdClass $course The course object
- * @param stdClass $cm The course module object
- * @param context $context The context
- * @param string $filearea The name of the file area
- * @param array $args Extra arguments
- * @param bool $forcedownload Whether the file should be downloaded
- * @param array $options Additional options affecting the file serving
- * @return bool False if the file not found, just send the file otherwise
+ * Returns the URL for the candidate dashboard
+ * 
+ * @return moodle_url URL for the candidate dashboard
  */
-function local_conocer_cert_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload, array $options = []) {
-    global $USER, $DB, $CFG;
-    
-    // Security check: verify context
-    if ($context->contextlevel != CONTEXT_SYSTEM) {
-        return false;
-    }
-    
-    // Check login and capability
-    require_login();
-    
-    // Security: verify file area is a valid one
-    $validfileareas = ['candidate_documents', 'company_documents', 'certificates', 'competency_assets'];
-    if (!in_array($filearea, $validfileareas)) {
-        return false;
-    }
-    
-    // Extract itemid and filename
-    $itemid = array_shift($args);
-    $filename = array_shift($args);
-    
-    if (!$filename) {
-        return false;
-    }
-    
-    // Security check: verify the user has appropriate permissions
-    if ($filearea === 'candidate_documents') {
-        // Check if document belongs to the current user
-        $document = $DB->get_record('local_conocer_documentos', ['id' => $itemid]);
-        if (!$document) {
-            return false;
-        }
-        
-        $candidate = $DB->get_record('local_conocer_candidatos', ['id' => $document->candidato_id]);
-        if (!$candidate) {
-            return false;
-        }
-        
-        // Allow access if:
-        // 1. User is the owner of the document
-        // 2. User is an admin
-        // 3. User is the assigned evaluator
-        $isowner = ($candidate->userid == $USER->id);
-        $isadmin = has_capability('local/conocer_cert:managecandidates', $context);
-        
-        $isevaluator = false;
-        if (!$isowner && !$isadmin) {
-            // Check if user is assigned as evaluator
-            $sql = "SELECT p.* 
-                    FROM {local_conocer_procesos} p 
-                    WHERE p.candidato_id = :candidatoid 
-                    AND p.evaluador_id = :evaluatorid";
-            $params = ['candidatoid' => $document->candidato_id, 'evaluatorid' => $USER->id];
-            $isevaluator = $DB->record_exists_sql($sql, $params);
-        }
-        
-        if (!$isowner && !$isadmin && !$isevaluator) {
-            return false;
-        }
-    } else if ($filearea === 'company_documents') {
-        $document = $DB->get_record('local_conocer_documentos_empresa', ['id' => $itemid]);
-        if (!$document) {
-            return false;
-        }
-        
-        $company = $DB->get_record('local_conocer_empresas', ['id' => $document->empresa_id]);
-        if (!$company) {
-            return false;
-        }
-        
-        $isowner = ($company->contacto_userid == $USER->id);
-        $isadmin = has_capability('local/conocer_cert:managecompanies', $context);
-        
-        if (!$isowner && !$isadmin) {
-            return false;
-        }
-    } else if ($filearea === 'certificates') {
-        $certificate = $DB->get_record('local_conocer_certificados', ['id' => $itemid]);
-        if (!$certificate) {
-            return false;
-        }
-        
-        $process = $DB->get_record('local_conocer_procesos', ['id' => $certificate->proceso_id]);
-        if (!$process) {
-            return false;
-        }
-        
-        $candidate = $DB->get_record('local_conocer_candidatos', ['id' => $process->candidato_id]);
-        if (!$candidate) {
-            return false;
-        }
-        
-        $isowner = ($candidate->userid == $USER->id);
-        $isadmin = has_capability('local/conocer_cert:managecandidates', $context);
-        
-        // Also check for a valid token for public access
-        $token = optional_param('token', '', PARAM_RAW);
-        $validtoken = false;
-        
-        if (!empty($token)) {
-            $validtoken = \local_conocer_cert\util\security::verify_document_token($token);
-            $validtoken = $validtoken && ($validtoken['documentid'] == $itemid);
-        }
-        
-        if (!$isowner && !$isadmin && !$validtoken) {
-            return false;
-        }
-    } else if ($filearea === 'competency_assets') {
-        // Competency assets are accessible to anyone who can view competencies
-        if (!has_capability('local/conocer_cert:viewcompetencies', $context)) {
-            return false;
-        }
-    }
-    
-    // Get file storage and retrieve file
-    $fs = get_file_storage();
-    $file = $fs->get_file($context->id, 'local_conocer_cert', $filearea, $itemid, '/', $filename);
-    
-    if (!$file) {
-        return false;
-    }
-    
-    // Send the file
-    send_stored_file($file, 86400, 0, $forcedownload, $options);
+function local_conocer_cert_get_candidate_dashboard_url() {
+    return new moodle_url('/local/conocer_cert/candidate/dashboard.php');
+}
+
+/**
+ * Returns the URL for the evaluator dashboard
+ * 
+ * @return moodle_url URL for the evaluator dashboard
+ */
+function local_conocer_cert_get_evaluator_dashboard_url() {
+    return new moodle_url('/local/conocer_cert/evaluator/dashboard.php');
+}
+
+/**
+ * Returns the URL for the company dashboard
+ * 
+ * @return moodle_url URL for the company dashboard
+ */
+function local_conocer_cert_get_company_dashboard_url() {
+    return new moodle_url('/local/conocer_cert/company/dashboard.php');
+}
+
+/**
+ * Returns the URL for the admin dashboard
+ * 
+ * @return moodle_url URL for the admin dashboard
+ */
+function local_conocer_cert_get_admin_dashboard_url() {
+    return new moodle_url('/local/conocer_cert/admin/index.php');
 }

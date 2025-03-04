@@ -15,17 +15,17 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version information for CONOCER certification plugin
+ * Version information for CONOCER certification plugin.
  *
- * @package   local_conocer_cert
- * @copyright 2025 Sebastian Gonzalez Zepeda sgonzalez@infraestructuragis.com
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package    local_conocer_cert
+ * @copyright  2025 Sebastian Gonzalez Zepeda sgonzalez@infraestructuragis.com
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2025021400;        // The current plugin version (Date: YYYYMMDDXX)
-$plugin->requires  = 2022112800;        // Requires Moodle 4.1 or later
-$plugin->component = 'local_conocer_cert'; // Full name of the plugin
-$plugin->maturity  = MATURITY_ALPHA;    // Maturity level
-$plugin->release   = '0.1.0';           // Human-readable version name
+$plugin->version   = 2025030400;      // The current plugin version (Date: YYYYMMDDXX).
+$plugin->requires  = 2022041900;      // Requires Moodle 4.0 or later.
+$plugin->component = 'local_conocer_cert'; // Full name of the plugin.
+$plugin->maturity  = MATURITY_ALPHA;  // Maturity level.
+$plugin->release   = '0.1.0';         // Human-readable version number.

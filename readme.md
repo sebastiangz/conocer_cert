@@ -1,135 +1,135 @@
-# CONOCER Certification Management
+# Gestión de Certificaciones CONOCER
 
-This Moodle plugin provides a comprehensive system for managing CONOCER (Mexican National Council for Standardization and Certification of Labor Competencies) certifications within a Moodle installation.
+Este plugin para Moodle proporciona un sistema integral para la gestión de certificaciones CONOCER (Consejo Nacional de Normalización y Certificación de Competencias Laborales de México) dentro de una instalación de Moodle.
 
-## Overview
+## Descripción General
 
-The CONOCER Certification Management plugin allows educational institutions and certification centers to administer the complete lifecycle of competency certifications, including:
+El plugin de Gestión de Certificaciones CONOCER permite a instituciones educativas y centros de certificación administrar el ciclo completo de certificaciones de competencias, incluyendo:
 
-- Managing candidates seeking certification
-- Handling document uploads and verification
-- Assigning external evaluators to certification candidates
-- Tracking certification processes from application to completion
-- Generating and verifying official certificates
-- Registering companies as certification endorsers
-- Providing detailed reporting and statistics
+- Gestión de candidatos que buscan certificación
+- Manejo y verificación de documentos cargados
+- Asignación de evaluadores externos a candidatos
+- Seguimiento de procesos de certificación desde la solicitud hasta la finalización
+- Generación y verificación de certificados oficiales
+- Registro de empresas como avales de certificación
+- Generación de reportes y estadísticas detalladas
 
-## Features
+## Características
 
-### For Candidates
-- Apply for certification in specific competencies and levels
-- Upload required documentation (ID, address proof, etc.)
-- Track certification progress through personalized dashboard
-- Download certificates upon successful completion
-- Receive automated notifications at key process stages
+### Para Candidatos
+- Solicitar certificación en competencias y niveles específicos
+- Cargar documentación requerida (identificación, comprobante de domicilio, etc.)
+- Seguir el progreso de certificación a través de un panel personalizado
+- Descargar certificados al completar exitosamente el proceso
+- Recibir notificaciones automáticas en etapas clave del proceso
 
-### For Evaluators
-- View assigned candidates waiting for evaluation
-- Submit evaluation results with detailed assessments
-- Monitor workload and performance statistics
-- Manage personal evaluator profile and competencies
+### Para Evaluadores
+- Ver candidatos asignados en espera de evaluación
+- Enviar resultados de evaluación con valoraciones detalladas
+- Monitorear carga de trabajo y estadísticas de desempeño
+- Gestionar perfil personal de evaluador y competencias
 
-### For Companies
-- Register as certifying entities
-- Select competencies of interest
-- Track certification processes within the company
-- Generate company-specific reports
+### Para Empresas
+- Registrarse como entidades certificadoras
+- Seleccionar competencias de interés
+- Seguir procesos de certificación dentro de la empresa
+- Generar informes específicos para la empresa
 
-### For Administrators
-- Manage the entire certification process
-- Review and approve candidate documents
-- Assign evaluators to certification candidates
-- Configure competencies and their levels
-- Generate comprehensive reports and statistics
-- Customize notification templates
+### Para Administradores
+- Gestionar todo el proceso de certificación
+- Revisar y aprobar documentos de candidatos
+- Asignar evaluadores a candidatos de certificación
+- Configurar competencias y sus niveles
+- Generar informes y estadísticas completas
+- Personalizar plantillas de notificación
 
-## Installation
+## Instalación
 
-### Prerequisites
-- Moodle 4.1 or higher
-- PHP 7.4 or higher
-- Database: MySQL 5.7+ / MariaDB 10.2+ / PostgreSQL 9.6+
+### Requisitos Previos
+- Moodle 4.1 o superior
+- PHP 7.4 o superior
+- Base de datos: MySQL 5.7+ / MariaDB 10.2+ / PostgreSQL 9.6+
 
-### Installation Steps
-1. Download the plugin package
-2. Extract the folder and place it in your Moodle installation under `/local/`
-3. Rename the folder to `conocer_cert` if necessary
-4. Visit your Moodle site as an administrator to complete the installation
-5. Configure the plugin settings under Site Administration > Plugins > Local Plugins > CONOCER Certification
+### Pasos de Instalación
+1. Descargar el paquete del plugin
+2. Extraer la carpeta y colocarla en la instalación de Moodle bajo `/local/`
+3. Renombrar la carpeta a `conocer_cert` si es necesario
+4. Visitar el sitio Moodle como administrador para completar la instalación
+5. Configurar los ajustes del plugin en Administración del sitio > Plugins > Plugins locales > Certificación CONOCER
 
-## Configuration
+## Configuración
 
-After installation, you'll need to set up:
+Después de la instalación, necesitará configurar:
 
-1. **Basic settings**:
-   - Institution name and logo
-   - Certificate expiration policies
-   - Document upload restrictions
+1. **Ajustes básicos**:
+   - Nombre y logo de la institución
+   - Políticas de vencimiento de certificados
+   - Restricciones de carga de documentos
 
-2. **Competencies**:
-   - Add CONOCER standard competencies with their official codes
-   - Configure available levels for each competency
-   - Define required documentation
+2. **Competencias**:
+   - Agregar competencias estándar CONOCER con sus códigos oficiales
+   - Configurar niveles disponibles para cada competencia
+   - Definir documentación requerida
 
-3. **User Roles**:
-   - Assign system administrators
-   - Register external evaluators
-   - Set up company administrators
+3. **Roles de Usuario**:
+   - Asignar administradores del sistema
+   - Registrar evaluadores externos
+   - Configurar administradores de empresas
 
-## Usage
+## Uso
 
-The plugin adds a main navigation item "CONOCER Certification" that adapts to the user's role:
+El plugin agrega un elemento de navegación principal "Certificación CONOCER" que se adapta al rol del usuario:
 
-- **Candidates** see their certification applications and progress
-- **Evaluators** see their assigned candidates and evaluation tools
-- **Companies** see their registered competencies and candidates
-- **Administrators** see comprehensive management options
+- **Candidatos** ven sus solicitudes de certificación y progreso
+- **Evaluadores** ven sus candidatos asignados y herramientas de evaluación
+- **Empresas** ven sus competencias registradas y candidatos
+- **Administradores** ven opciones completas de gestión
 
-## Security Features
+## Características de Seguridad
 
-The plugin includes robust security features:
+El plugin incluye funciones robustas de seguridad:
 
-- Document validation for potentially malicious content
-- Secure certificate verification system
-- Role-based access controls
-- Detailed security logging
+- Validación de documentos para contenido potencialmente malicioso
+- Sistema seguro de verificación de certificados
+- Controles de acceso basados en roles
+- Registro detallado de eventos de seguridad
 
-## Scheduled Tasks
+## Tareas Programadas
 
-The plugin includes the following automated tasks:
+El plugin incluye las siguientes tareas automatizadas:
 
-- Send reminders to candidates with pending documents
-- Notify evaluators of pending evaluations
-- Process certificate expiration dates
-- Generate periodic reports for administrators
+- Envío de recordatorios a candidatos con documentos pendientes
+- Notificación a evaluadores sobre evaluaciones pendientes
+- Procesamiento de fechas de vencimiento de certificados
+- Generación de informes periódicos para administradores
 
-## Customization
+## Personalización
 
-The system uses Mustache templates that can be overridden in your theme to customize the appearance of:
+El sistema utiliza plantillas Mustache que pueden ser sobrescritas en su tema para personalizar la apariencia de:
 
-- Dashboard interfaces
-- Certificate templates
-- Notification messages
-- Report layouts
+- Interfaces de panel de control
+- Plantillas de certificados
+- Mensajes de notificación
+- Diseños de informes
 
-## Support and Development
+## Soporte y Desarrollo
 
-- **Author**: Sebastian Gonzalez Zepeda
-- **Email**: sgonzalez@infraestructuragis.com
+- **Autor**: Sebastian Gonzalez Zepeda
+- **Correo electrónico**: sgonzalez@infraestructuragis.com
 - **Copyright**: 2025 
-- **License**: [GNU GPL v3 or later](http://www.gnu.org/copyleft/gpl.html)
+- **Licencia**: [GNU GPL v3 o posterior](http://www.gnu.org/copyleft/gpl.html)
 
-For bug reports, feature requests, or other inquiries, please contact the author directly.
+Para reportes de errores, solicitudes de funciones u otras consultas, comuníquese directamente con el autor.
 
-## Contributing
+## Colaboración
 
-Contributions to improve the plugin are welcome. Please follow these steps:
+Las contribuciones para mejorar el plugin son bienvenidas. Por favor, siga estos pasos:
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
+1. Hacer un fork del repositorio
+2. Crear una rama para la funcionalidad
+3. Realizar los cambios
+4. Enviar una solicitud de extracción
 
-## Acknowledgements
+## Agradecimientos
 
-This plugin was developed to support educational institutions in Mexico that offer CONOCER certifications, providing a comprehensive digital solution to manage the entire certification process.
+Este plugin fue desarrollado para apoyar a instituciones educativas en México que ofrecen certificaciones CONOCER, proporcionando una solución digital integral para gestionar todo el proceso de certificación.

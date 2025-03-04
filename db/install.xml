@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/conocer_cert/db" VERSION="20250101" COMMENT="XMLDB file for Moodle local/conocer_cert"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
+>
+  <TABLES>
+    <TABLE NAME="local_conocer_candidatos" COMMENT="Tabla para candidatos a certificación">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="ID del usuario de Moodle"/>
+        <FIELD NAME="competencia_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="ID de la competencia a certificar"/>
+        <FIELD NAME="nivel" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="Nivel de competencia (1-5)"/>
+        <FIELD NAME="estado" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="pendiente" SEQUENCE="false" COMMENT="Estado de la solicitud"/>
+        <FIELD NAME="experiencia" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Experiencia relacionada con la competencia"/>
+        <FIELD NAME="curp" TYPE="char" LENGTH="18" NOTNULL="true" SEQUENCE="false" COMMENT="CURP del candidato"/>
+        <FIELD NAME="telefono" TYPE="char" LENGTH="20" NOTNULL="true" SEQUENCE="false" COMMENT="Teléfono de contacto"/>
+        <FIELD NAME="direccion" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Dirección del candidato"/>
+        <FIELD NAME="fuente_informacion" TYPE="char" LENGTH="20" NOTNULL="false" SEQUENCE="false" COMMENT="Cómo conoció el programa"/>
+        <FIELD NAME="situacion_laboral" TYPE="char" LENGTH="20" NOTNULL="false" SEQUENCE="false" COMMENT="Situación laboral actual"/>
+        <FIELD NAME="modalidad_preferida" TYPE="char" LENGTH="20" NOTNULL="false" DEFAULT="cualquiera" SEQUENCE="false" COMMENT="Modalidad de evaluación preferida"/>
+        <FIELD NAME="disponibilidad" TYPE="char" LENGTH="20" NOTNULL="false" DEFAULT="completa" SEQUENCE="false" COMMENT="Disponibilidad para evaluación"/>
+        <FIELD NAME="comentarios" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Comentarios adicionales"/>
+        <FIELD NAME="fecha_solicitud" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Fecha de solicitud (timestamp)"/>
+        <FIELD NAME="fecha_modificacion" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Fecha de última modificación (timestamp)"/>
+        <FIELD NAME="notas" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Notas administrativas"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_candidato_usuario" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+        <KEY NAME="fk_candidato_competencia" TYPE="foreign" FIELDS="competencia_id" REFTABLE="local_conocer_competencias" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="ix_candidato_userid" UNIQUE="false" FIELDS="userid"/>
+        <INDEX NAME="ix_candidato_competencia" UNIQUE="false" FIELDS="competencia_id"/>
+        <INDEX NAME="ix_candidato_estado" UNIQUE="false" FIELDS="estado"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_conocer_empresas" COMMENT="Tabla para empresas avales">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="nombre" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="Nombre de la empresa"/>
+        <FIELD NAME="rfc" TYPE="char" LENGTH="20" NOTNULL="true" SEQUENCE="false" COMMENT="RFC de la empresa"/>
+        <FIELD NAME="direccion" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Dirección de la empresa"/>
+        <FIELD NAME="sector" TYPE="char" LENGTH="30" NOTNULL="false" SEQUENCE="false" COMMENT="Sector/industria de la empresa"/>
+        <FIELD NAME="num_empleados" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Número de empleados"/>
+        <FIELD NAME="contacto_nombre" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="Nombre del contacto principal"/>
+        <FIELD NAME="contacto_email" TYPE="char" LENGTH="100" NOTNULL="true" SEQUENCE="false" COMMENT="Email del contacto"/>
+        <FIELD NAME="contacto_telefono" TYPE="char" LENGTH="20" NOTNULL="false" SEQUENCE="false" COMMENT="Teléfono del contacto"/>
+        <FIELD NAME="contacto_puesto" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false" COMMENT="Puesto del contacto"/>
+        <FIELD NAME="contacto_userid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="ID del usuario de Moodle asociado al contacto"/>
+        <FIELD NAME="competencias" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="IDs de competencias de interés"/>
+        <FIELD NAME="justificacion" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Justificación del interés"/>
+        <FIELD NAME="estado" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="pendiente" SEQUENCE="false" COMMENT="Estado de la solicitud"/>
+        <FIELD NAME="fecha_solicitud" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Fecha de solicitud (timestamp)"/>
+        <FIELD NAME="fecha_modificacion" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Fecha de última modificación (timestamp)"/>
+        <FIELD NAME="fecha_aprobacion" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Fecha de aprobación (timestamp)"/>
+        <FIELD NAME="aprobado_por" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="ID del usuario que aprobó la solicitud"/>
+        <FIELD NAME="notas_admin" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Notas administrativas"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_empresa_contacto" TYPE="foreign" FIELDS="contacto_userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="ix_empresa_rfc" UNIQUE="true" FIELDS="rfc"/>
+        <INDEX NAME="ix_empresa_estado" UNIQUE="false" FIELDS="estado"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_conocer_competencias" COMMENT="Tabla para competencias CONOCER">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="codigo" TYPE="char" LENGTH="50" NOTNULL="true" SEQUENCE="false" COMMENT="Código de la competencia"/>
+        <FIELD NAME="nombre" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="Nombre de la competencia"/>
+        <FIELD NAME="descripcion" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Descripción de la competencia"/>
+        <FIELD NAME="sector" TYPE="char" LENGTH="30" NOTNULL="false" SEQUENCE="false" COMMENT="Sector/área de la competencia"/>
+        <FIELD NAME="niveles_disponibles" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="1,2,3,4,5" SEQUENCE="false" COMMENT="Niveles disponibles (separados por comas)"/>
+        <FIELD NAME="requisitos" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Requisitos previos"/>
+        <FIELD NAME="tipo_evaluacion" TYPE="char" LENGTH="20" NOTNULL="false" DEFAULT="mixta" SEQUENCE="false" COMMENT="Tipo de evaluación"/>
+        <FIELD NAME="duracion_estimada" TYPE="int" LENGTH="5" NOTNULL="false" DEFAULT="30" SEQUENCE="false" COMMENT="Duración estimada en días"/>
+        <FIELD NAME="costo" TYPE="number" LENGTH="10" DECIMALS="2" NOTNULL="false" DEFAULT="0.00" SEQUENCE="false" COMMENT="Costo de la certificación"/>
+        <FIELD NAME="documentos_requeridos" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Documentos requeridos (separados por comas)"/>
+        <FIELD NAME="activo" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="Si la competencia está activa (1) o no (0)"/>
+        <FIELD NAME="fecha_inicio" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Fecha de inicio de disponibilidad"/>
+        <FIELD NAME="fecha_fin" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Fecha de fin de disponibilidad"/>
+        <FIELD NAME="descripcion_nivel1" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Descripción del nivel 1"/>
+        <FIELD NAME="descripcion_nivel2" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Descripción del nivel 2"/>
+        <FIELD NAME="descripcion_nivel3" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Descripción del nivel 3"/>
+        <FIELD NAME="descripcion_nivel4" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Descripción del nivel 4"/>
+        <FIELD NAME="descripcion_nivel5" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Descripción del nivel 5"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="ix_competencia_codigo" UNIQUE="true" FIELDS="codigo"/>
+        <INDEX NAME="ix_competencia_activo" UNIQUE="false" FIELDS="activo"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_conocer_documentos" COMMENT="Tabla para documentos de certificación">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="candidato_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="ID del candidato"/>
+        <FIELD NAME="tipo" TYPE="char" LENGTH="50" NOTNULL="true" SEQUENCE="false" COMMENT="Tipo de documento"/>
+        <FIELD NAME="nombre_archivo" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="Nombre del archivo"/>
+        <FIELD NAME="ruta_archivo" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="Ruta del archivo en el sistema"/>
+        <FIELD NAME="mimetype" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false" COMMENT="Tipo MIME del archivo"/>
+        <FIELD NAME="tamanio" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Tamaño del archivo en bytes"/>
+        <FIELD NAME="hash" TYPE="char" LENGTH="40" NOTNULL="false" SEQUENCE="false" COMMENT="Hash SHA1 del archivo"/>
+        <FIELD NAME="estado" TYPE="char" LENGTH="20" NOTNULL="false" DEFAULT="pendiente" SEQUENCE="false" COMMENT="Estado de revisión del documento"/>
+        <FIELD NAME="comentarios" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Comentarios sobre el documento"/>
+        <FIELD NAME="revisado_por" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="ID del usuario que revisó el documento"/>
+        <FIELD NAME="fecha_subida" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Fecha de subida (timestamp)"/>
+        <FIELD NAME="fecha_revision" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Fecha de revisión (timestamp)"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_documento_candidato" TYPE="foreign" FIELDS="candidato_id" REFTABLE="local_conocer_candidatos" REFFIELDS="id"/>
+        <KEY NAME="fk_documento_revisor" TYPE="foreign" FIELDS="revisado_por" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="ix_documento_candidato" UNIQUE="false" FIELDS="candidato_id"/>
+        <INDEX NAME="ix_documento_tipo" UNIQUE="false" FIELDS="tipo"/>
+        <INDEX NAME="ix_documento_estado" UNIQUE="false" FIELDS="estado"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_conocer_procesos" COMMENT="Tabla para procesos de certificación">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="candidato_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="ID del candidato"/>
+        <FIELD NAME="etapa" TYPE="char" LENGTH="50" NOTNULL="true" DEFAULT="solicitud" SEQUENCE="false" COMMENT="Etapa del proceso"/>
+        <FIELD NAME="evaluador_id" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="ID del evaluador asignado"/>
+        <FIELD NAME="fecha_inicio" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Fecha de inicio del proceso (timestamp)"/>
+        <FIELD NAME="fecha_evaluacion" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Fecha de evaluación (timestamp)"/>
+        <FIELD NAME="fecha_fin" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Fecha de finalización del proceso (timestamp)"/>
+        <FIELD NAME="resultado" TYPE="char" LENGTH="30" NOTNULL="false" SEQUENCE="false" COMMENT="Resultado del proceso"/>
+        <FIELD NAME="calificacion" TYPE="number" LENGTH="5" DECIMALS="2" NOTNULL="false" SEQUENCE="false" COMMENT="Calificación numérica (si aplica)"/>
+        <FIELD NAME="certificado_id" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="ID del certificado emitido"/>
+        <FIELD NAME="modalidad" TYPE="char" LENGTH="20" NOTNULL="false" SEQUENCE="false" COMMENT="Modalidad de evaluación"/>
+        <FIELD NAME="lugar" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="Lugar de evaluación"/>
+        <FIELD NAME="notas" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Notas del proceso"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Última modificación (timestamp)"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_proceso_candidato" TYPE="foreign" FIELDS="candidato_id" REFTABLE="local_conocer_candidatos" REFFIELDS="id"/>
+        <KEY NAME="fk_proceso_evaluador" TYPE="foreign" FIELDS="evaluador_id" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="ix_proceso_candidato" UNIQUE="false" FIELDS="candidato_id"/>
+        <INDEX NAME="ix_proceso_evaluador" UNIQUE="false" FIELDS="evaluador_id"/>
+        <INDEX NAME="ix_proceso_etapa" UNIQUE="false" FIELDS="etapa"/>
+        <INDEX NAME="ix_proceso_resultado" UNIQUE="false" FIELDS="resultado"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_conocer_evaluadores" COMMENT="Tabla para evaluadores externos">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="ID del usuario de Moodle"/>
+        <FIELD NAME="curp" TYPE="char" LENGTH="18" NOTNULL="true" SEQUENCE="false" COMMENT="CURP del evaluador"/>
+        <FIELD NAME="telefono" TYPE="char" LENGTH="20" NOTNULL="true" SEQUENCE="false" COMMENT="Teléfono de contacto"/>
+        <FIELD NAME="direccion" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Dirección del evaluador"/>
+        <FIELD NAME="cedula" TYPE="char" LENGTH="20" NOTNULL="false" SEQUENCE="false" COMMENT="Cédula profesional"/>
+        <FIELD NAME="grado_academico" TYPE="char" LENGTH="30" NOTNULL="false" SEQUENCE="false" COMMENT="Grado académico"/>
+        <FIELD NAME="experiencia_anios" TYPE="int" LENGTH="5" NOTNULL="false" SEQUENCE="false" COMMENT="Años de experiencia"/>
+        <FIELD NAME="experiencia" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="Descripción de experiencia profesional"/>
+        <FIELD NAME="certificaciones" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Certificaciones propias"/>
+        <FIELD NAME="competencias" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="Competencias que puede evaluar (formato JSON)"/>
+        <FIELD NAME="disponibilidad" TYPE="char" LENGTH="20" NOTNULL="false" DEFAULT="completa" SEQUENCE="false" COMMENT="Disponibilidad del evaluador"/>
+        <FIELD NAME="max_candidatos" TYPE="int" LENGTH="5" NOTNULL="false" DEFAULT="10" SEQUENCE="false" COMMENT="Máximo de candidatos simultáneos"/>
+        <FIELD NAME="estatus" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="activo" SEQUENCE="false" COMMENT="Estado del evaluador"/>
+        <FIELD NAME="fecha_limite" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Fecha límite si es temporal"/>
+        <FIELD NAME="notas" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Notas administrativas"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Fecha de creación (timestamp)"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Fecha de modificación (timestamp)"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_evaluador_usuario" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="ix_evaluador_userid" UNIQUE="true" FIELDS="userid"/>
+        <INDEX NAME="ix_evaluador_estatus" UNIQUE="false" FIELDS="estatus"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_conocer_evaluaciones" COMMENT="Tabla para detalles de evaluaciones">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="proceso_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="ID del proceso de certificación"/>
+        <FIELD NAME="evaluador_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="ID del usuario evaluador"/>
+        <FIELD NAME="calificacion" TYPE="number" LENGTH="5" DECIMALS="2" NOTNULL="false" SEQUENCE="false" COMMENT="Calificación numérica"/>
+        <FIELD NAME="criterios" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Criterios evaluados (formato JSON)"/>
+        <FIELD NAME="comentarios" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Comentarios generales"/>
+        <FIELD NAME="recomendaciones" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Recomendaciones para el candidato"/>
+        <FIELD NAME="archivos_evidencia" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Archivos de evidencia"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Fecha de creación (timestamp)"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_evaluacion_proceso" TYPE="foreign" FIELDS="proceso_id" REFTABLE="local_conocer_procesos" REFFIELDS="id"/>
+        <KEY NAME="fk_evaluacion_evaluador" TYPE="foreign" FIELDS="evaluador_id" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="ix_evaluacion_proceso" UNIQUE="false" FIELDS="proceso_id"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_conocer_certificados" COMMENT="Tabla para certificados emitidos">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="proceso_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="ID del proceso de certificación"/>
+        <FIELD NAME="numero_folio" TYPE="char" LENGTH="50" NOTNULL="true" SEQUENCE="false" COMMENT="Número de folio único"/>
+        <FIELD NAME="fecha_emision" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Fecha de emisión (timestamp)"/>
+        <FIELD NAME="fecha_vencimiento" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Fecha de vencimiento (timestamp)"/>
+        <FIELD NAME="ruta_archivo" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="Ruta del archivo del certificado"/>
+        <FIELD NAME="hash_verificacion" TYPE="char" LENGTH="40" NOTNULL="true" SEQUENCE="false" COMMENT="Hash para verificación"/>
+        <FIELD NAME="emitido_por" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="ID del usuario que emitió el certificado"/>
+        <FIELD NAME="estatus" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="activo" SEQUENCE="false" COMMENT="Estado del certificado"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_certificado_proceso" TYPE="foreign" FIELDS="proceso_id" REFTABLE="local_conocer_procesos" REFFIELDS="id"/>
+        <KEY NAME="fk_certificado_emisor" TYPE="foreign" FIELDS="emitido_por" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="ix_certificado_folio" UNIQUE="true" FIELDS="numero_folio"/>
+        <INDEX NAME="ix_certificado_hash" UNIQUE="true" FIELDS="hash_verificacion"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_conocer_notificaciones" COMMENT="Tabla para notificaciones del sistema">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="ID del usuario destinatario"/>
+        <FIELD NAME="remitente_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="ID del usuario remitente"/>
+        <FIELD NAME="tipo" TYPE="char" LENGTH="50" NOTNULL="true" SEQUENCE="false" COMMENT="Tipo de notificación"/>
+        <FIELD NAME="asunto" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="Asunto de la notificación"/>
+        <FIELD NAME="mensaje" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="Contenido de la notificación"/>
+        <FIELD NAME="leido" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Si ha sido leída (1) o no (0)"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Fecha de creación (timestamp)"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Fecha de última modificación (timestamp)"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_notificacion_usuario" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+        <KEY NAME="fk_notificacion_remitente" TYPE="foreign" FIELDS="remitente_id" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="ix_notificacion_userid" UNIQUE="false" FIELDS="userid"/>
+        <INDEX NAME="ix_notificacion_leido" UNIQUE="false" FIELDS="leido"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_conocer_security_log" COMMENT="Tabla para registro de eventos de seguridad">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="ID del usuario"/>
+        <FIELD NAME="action" TYPE="char" LENGTH="100" NOTNULL="true" SEQUENCE="false" COMMENT="Acción intentada"/>
+        <FIELD NAME="ip" TYPE="char" LENGTH="45" NOTNULL="false" SEQUENCE="false" COMMENT="Dirección IP"/>
+        <FIELD NAME="details" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Detalles del evento"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Fecha del evento (timestamp)"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_securitylog_usuario" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="ix_securitylog_userid" UNIQUE="false" FIELDS="userid"/>
+        <INDEX NAME="ix_securitylog_action" UNIQUE="false" FIELDS="action"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>

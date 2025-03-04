@@ -22,8 +22,8 @@ function($, Str, Notification, Ajax, Templates, ModalFactory, ModalEvents) {
             allowedTypes: ['application/pdf', 'image/jpeg', 'image/png'],
             maxFileSize: 10485760, // 10MB default
             requiredDocTypes: [],
-            uploadUrl: M.cfg.wwwroot + '/local/conocer_cert/ajax/upload_document.php',
-            deleteUrl: M.cfg.wwwroot + '/local/conocer_cert/ajax/delete_document.php',
+            uploadUrl: M.cfg.wwwroot + '/local/conocer_cert/upload_document.php',
+            deleteUrl: M.cfg.wwwroot + '/local/conocer_cert/delete_document.php',
             candidateId: 0,
             showValidationErrors: true
         }, options);

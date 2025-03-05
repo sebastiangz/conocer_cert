@@ -151,11 +151,11 @@ class admin_dashboard extends base_dashboard {
             'has_recent_requests' => !empty($this->recent_requests),
             'has_pending_companies' => !empty($this->pending_companies),
             'has_pending_evaluator_assignments' => !empty($this->pending_evaluator_assignments),
-            'candidates_url' => new \moodle_url('/local/conocer_cert/admin/candidates.php'),
-            'companies_url' => new \moodle_url('/local/conocer_cert/admin/companies.php'),
-            'evaluators_url' => new \moodle_url('/local/conocer_cert/admin/evaluators.php'),
-            'competencies_url' => new \moodle_url('/local/conocer_cert/admin/competencies.php'),
-            'reports_url' => new \moodle_url('/local/conocer_cert/admin/reports.php')
+            'candidates_url' => new \moodle_url('/local/conocer_cert/pages/candidates.php'),
+            'companies_url' => new \moodle_url('/local/conocer_cert/pages/companies.php'),
+            'evaluators_url' => new \moodle_url('/local/conocer_cert/pages/evaluators.php'),
+            'competencies_url' => new \moodle_url('/local/conocer_cert/pages/competencies.php'),
+            'reports_url' => new \moodle_url('/local/conocer_cert/pages/reports.php')
         ];
         
         // Procesar solicitudes recientes
@@ -167,7 +167,7 @@ class admin_dashboard extends base_dashboard {
                 'nivel' => $request->nivel,
                 'estado' => get_string('estado_' . $request->estado, 'local_conocer_cert'),
                 'fecha' => userdate($request->fecha_solicitud),
-                'view_url' => new \moodle_url('/local/conocer_cert/admin/view_candidate.php', ['id' => $request->id])
+                'view_url' => new \moodle_url('/local/conocer_cert/pages/view_candidate.php', ['id' => $request->id])
             ];
         }
         
@@ -179,7 +179,7 @@ class admin_dashboard extends base_dashboard {
                 'rfc' => $company->rfc,
                 'contacto' => $company->contacto_nombre,
                 'fecha' => userdate($company->fecha_solicitud),
-                'view_url' => new \moodle_url('/local/conocer_cert/admin/view_company.php', ['id' => $company->id])
+                'view_url' => new \moodle_url('/local/conocer_cert/pages/view_company.php', ['id' => $company->id])
             ];
         }
         
@@ -194,7 +194,7 @@ class admin_dashboard extends base_dashboard {
                 'fecha' => userdate($assignment->fecha_inicio),
                 'days_pending' => floor((time() - $assignment->fecha_inicio) / 86400),
                 'is_urgent' => ((time() - $assignment->fecha_inicio) > (5 * 86400)),
-                'assign_url' => new \moodle_url('/local/conocer_cert/admin/assign_evaluator.php', ['id' => $assignment->candidato_id])
+                'assign_url' => new \moodle_url('/local/conocer_cert/pages/assign_evaluator.php', ['id' => $assignment->candidato_id])
             ];
         }
         
@@ -226,7 +226,7 @@ class admin_dashboard extends base_dashboard {
             $notifications[] = [
                 'type' => 'warning',
                 'message' => get_string('admin_alert_candidates_waiting', 'local_conocer_cert', $waitingCount),
-                'url' => new \moodle_url('/local/conocer_cert/admin/pending_assignments.php')
+                'url' => new \moodle_url('/local/conocer_cert/pages/pending_assignments.php')
             ];
         }
         
@@ -243,7 +243,7 @@ class admin_dashboard extends base_dashboard {
             $notifications[] = [
                 'type' => 'warning',
                 'message' => get_string('admin_alert_companies_pending', 'local_conocer_cert', $pendingCompanies),
-                'url' => new \moodle_url('/local/conocer_cert/admin/pending_companies.php')
+                'url' => new \moodle_url('/local/conocer_cert/pages/pending_companies.php')
             ];
         }
         
@@ -259,7 +259,7 @@ class admin_dashboard extends base_dashboard {
             $notifications[] = [
                 'type' => 'danger',
                 'message' => get_string('admin_alert_security_incidents', 'local_conocer_cert', $securityIncidents),
-                'url' => new \moodle_url('/local/conocer_cert/admin/security_log.php')
+                'url' => new \moodle_url('/local/conocer_cert/pages/security_log.php')
             ];
         }
         

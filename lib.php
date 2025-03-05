@@ -190,37 +190,37 @@ function local_conocer_cert_extend_navigation(global_navigation $navigation) {
         if (has_capability('local/conocer_cert:managecandidates', context_system::instance())) {
             $adminnode = $conocernode->add(
                 get_string('administration', 'local_conocer_cert'),
-                new moodle_url('/local/conocer_cert/admin/index.php'),
+                new moodle_url('/local/conocer_cert/pages/index.php'),
                 navigation_node::TYPE_CUSTOM
             );
             
             $adminnode->add(
                 get_string('candidates', 'local_conocer_cert'),
-                new moodle_url('/local/conocer_cert/admin/candidates.php'),
+                new moodle_url('/local/conocer_cert/pages/candidates.php'),
                 navigation_node::TYPE_CUSTOM
             );
             
             $adminnode->add(
                 get_string('companies', 'local_conocer_cert'),
-                new moodle_url('/local/conocer_cert/admin/companies.php'),
+                new moodle_url('/local/conocer_cert/pages/companies.php'),
                 navigation_node::TYPE_CUSTOM
             );
             
             $adminnode->add(
                 get_string('evaluators', 'local_conocer_cert'),
-                new moodle_url('/local/conocer_cert/admin/evaluators.php'),
+                new moodle_url('/local/conocer_cert/pages/evaluators.php'),
                 navigation_node::TYPE_CUSTOM
             );
             
             $adminnode->add(
                 get_string('competencies', 'local_conocer_cert'),
-                new moodle_url('/local/conocer_cert/admin/competencies.php'),
+                new moodle_url('/local/conocer_cert/pages/competencies.php'),
                 navigation_node::TYPE_CUSTOM
             );
             
             $adminnode->add(
                 get_string('reports', 'local_conocer_cert'),
-                new moodle_url('/local/conocer_cert/admin/reports.php'),
+                new moodle_url('/local/conocer_cert/pages/reports.php'),
                 navigation_node::TYPE_CUSTOM
             );
         }
@@ -307,5 +307,5 @@ function local_conocer_cert_get_company_dashboard_url() {
  * @return moodle_url URL for the admin dashboard
  */
 function local_conocer_cert_get_admin_dashboard_url() {
-    return new moodle_url('/local/conocer_cert/admin/index.php');
+    return new moodle_url('/local/conocer_cert/pages/index.php');
 }

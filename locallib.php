@@ -450,6 +450,8 @@ function local_conocer_cert_get_assigned_candidates($evaluatoruserid, $filter = 
                    u.firstname, u.lastname, u.email,
                    comp.nombre as competencia_nombre, comp.codigo as competencia_codigo
             FROM {local_conocer_procesos} p
+            JOIN {local_conocer_candidatos} c ON p.candidato
+            FROM {local_conocer_procesos} p
             JOIN {local_conocer_candidatos} c ON p.candidato_id = c.id
             JOIN {user} u ON c.userid = u.id
             JOIN {local_conocer_competencias} comp ON c.competencia_id = comp.id
